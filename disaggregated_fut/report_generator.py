@@ -93,7 +93,11 @@ def generate_report(date_str: str = None):
 
     # Calculate additional columns
     df['Producer_Net'] = df['Prod_Merc_Positions_Long_All'] - df['Prod_Merc_Positions_Short_All']
+    df['Change_Producer_Net'] = df['Change_in_Prod_Merc_Long_All'] - df['Change_in_Prod_Merc_Short_All']
+
     df['Money_Manager_Net'] = df['M_Money_Positions_Long_All'] - df['M_Money_Positions_Short_All']
+    df['Change_Money_Manager_Net'] = df['Change_in_M_Money_Long_All'] - df['Change_in_Prod_Merc_Short_All']
+    
     df['Total_Net'] = df['Producer_Net'] + df['Money_Manager_Net']
     df['Gap'] = df['Money_Manager_Net'] - df['Producer_Net'] 
 
@@ -134,5 +138,5 @@ def generate_report(date_str: str = None):
     conn.close()
 
 if __name__ == "__main__":
-    target_date = datetime(2009, 10, 5).date
+    target_date = None # datetime(2009, 10, 5).date
     generate_report(target_date)

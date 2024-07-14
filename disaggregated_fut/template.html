@@ -5,45 +5,73 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CoT Disaggregated Report Analyser</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Roboto', Arial, sans-serif;
             margin: 0;
             padding: 20px;
-            background-color: #f0f0f0;
+            background-color: #f7f7f7;
+            color: #333;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .container {
+
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
         }
 
         h1,
         h2 {
-            color: #333;
+            color: #003366;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 1.8em;
+            margin-top: 30px;
+        }
+
+        p {
+            text-align: center;
+            margin-bottom: 30px;
         }
 
         table {
             width: 100%;
-            border-collapse: collapse;
-            background-color: white;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 30px;
         }
 
         th,
         td {
             padding: 12px;
-            text-align: right;
-            border-bottom: 1px solid #ddd;
+            border: 1px solid #e0e0e0;
         }
 
         th {
-            background-color: #4a86e8;
+            background-color: #003366;
             color: white;
             font-weight: bold;
+            text-align: center;
+        }
+
+        td {
+            text-align: right;
         }
 
         tr:nth-child(even) {
-            background-color: #f8f8f8;
-        }
-
-        tr:hover {
-            background-color: #f0f0f0;
+            background-color: #f9f9f9;
         }
 
         .category {
@@ -56,14 +84,6 @@
             text-align: left;
         }
 
-        .positive {
-            color: green;
-        }
-
-        .negative {
-            color: red;
-        }
-
         .percentile {
             width: 35px;
             height: 20px;
@@ -72,119 +92,151 @@
             color: white;
             font-weight: bold;
             line-height: 20px;
+            border-radius: 3px;
         }
 
         .percentile-high {
-            background-color: #92d050;
+            background-color: #006400;
         }
 
         .percentile-medium {
-            background-color: #ffff00;
+            background-color: #FFA500;
             color: black;
         }
 
         .percentile-low {
-            background-color: #ff0000;
+            background-color: #8B0000;
+        }
+
+        .key-insights {
+            background-color: #f0f0f0;
+            padding: 20px;
+            border-radius: 5px;
+        }
+
+        .key-insights h3 {
+            margin-top: 0;
+            color: #003366;
+        }
+
+        @media (max-width: 768px) {
+            table {
+                font-size: 14px;
+            }
+
+            th,
+            td {
+                padding: 8px;
+            }
         }
     </style>
 </head>
 
 <body>
-    <h1>CoT Disaggregated Report Analyser</h1>
-    <h2>CoT Commodities</h2>
-    <p>Date: {{ report_date }}</p>
-    <table>
-        <thead>
-            <tr>
-                <th class="symbol">Symbol</th>
-                <th colspan="4">Producer</th>
-                <th colspan="4">Money Manager</th>
-                <th colspan="4">Gap</th>
-                <th colspan="2">Open Interest</th>
-            </tr>
-            <tr>
+    <div class="container">
+        <h1>CoT Disaggregated Report Analysis</h1>
+        <h2>CoT Commodities</h2>
+        <p>Date: {{ report_date }}</p>
+        <table>
+            <thead>
+                <tr>
+                    <th class="symbol">Symbol</th>
+                    <th colspan="5">Producer/Consumer</th>
+                    <th colspan="5">Money Manager</th>
+                    <th colspan="4">Gap</th>
+                    <th colspan="2">Open Interest</th>
+                </tr>
+                <tr>
 
-                <th></th>
-                <th>Net</th>
-                <th>25w</th>
-                <th>52w</th>
-                <th>3yr</th>
-                <th>Net</th>
-                <th>25w</th>
-                <th>52w</th>
-                <th>3yr</th>
-                <th>Net</th>
-                <th>25w</th>
-                <th>52w</th>
-                <th>3yr</th>
-                <th>Value</th>
-                <th>Change</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for group in data %}
-            <tr>
-                <td colspan="16" class="category">{{ group.category }}</td>
-            </tr>
-            {% for item in group.commodities %}
-            <tr>
-                <td class="symbol">{{ item.Commodity_Name }}</td>
+                    <th></th>
+                    <th>Net</th>
+                    <th>Change</th>
+                    <th>25w</th>
+                    <th>52w</th>
+                    <th>3yr</th>
+                    <th>Net</th>
+                    <th>Change</th>
+                    <th>25w</th>
+                    <th>52w</th>
+                    <th>3yr</th>
+                    <th>Net</th>
+                    <th>25w</th>
+                    <th>52w</th>
+                    <th>3yr</th>
+                    <th>Value</th>
+                    <th>Change</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for group in data %}
+                <tr>
+                    <td colspan="17" class="category">{{ group.category }}</td>
+                </tr>
+                {% for item in group.commodities %}
+                <tr>
+                    <td class="symbol">{{ item.Commodity_Name }}</td>
 
-                <td class="">{{
-                    "{:,}".format(item.Producer_Net) }}</td>
-                <td><span
-                        class="percentile {{ 'percentile-high' if item.Producer_25w > 80 else 'percentile-medium' if item.Producer_25w > 20 else 'percentile-low' }}">{{
-                        item.Producer_25w }}</span></td>
-                <td><span
-                        class="percentile {{ 'percentile-high' if item.Producer_52w > 80 else 'percentile-medium' if item.Producer_52w > 20 else 'percentile-low' }}">{{
-                        item.Producer_52w }}</span></td>
-                <td><span
-                        class="percentile {{ 'percentile-high' if item.Producer_3yr > 80 else 'percentile-medium' if item.Producer_3yr > 20 else 'percentile-low' }}">{{
-                        item.Producer_3yr }}</span></td>
+                    <td class="">{{"{:,}".format(item.Producer_Net) }}</td>
+                    <td class="">{{"{:,}".format(item.Change_Producer_Net) }}</td>
+                    <td><span
+                            class="percentile {{ 'percentile-high' if item.Producer_25w > 80 else 'percentile-medium' if item.Producer_25w > 20 else 'percentile-low' }}">{{
+                            item.Producer_25w }}</span></td>
+                    <td><span
+                            class="percentile {{ 'percentile-high' if item.Producer_52w > 80 else 'percentile-medium' if item.Producer_52w > 20 else 'percentile-low' }}">{{
+                            item.Producer_52w }}</span></td>
+                    <td><span
+                            class="percentile {{ 'percentile-high' if item.Producer_3yr > 80 else 'percentile-medium' if item.Producer_3yr > 20 else 'percentile-low' }}">{{
+                            item.Producer_3yr }}</span></td>
 
-                <td class="">{{
-                    "{:,}".format(item.Money_Manager_Net) }}</td>
-                <td><span
-                        class="percentile {{ 'percentile-low' if item.Money_Manager_25w > 80 else 'percentile-medium' if item.Money_Manager_25w > 20 else 'percentile-high' }}">{{
-                        item.Money_Manager_25w }}</span></td>
-                <td><span
-                        class="percentile {{ 'percentile-low' if item.Money_Manager_52w > 80 else 'percentile-medium' if item.Money_Manager_52w > 20 else 'percentile-high' }}">{{
-                        item.Money_Manager_52w }}</span></td>
-                <td><span
-                        class="percentile {{ 'percentile-low' if item.Money_Manager_3yr > 80 else 'percentile-medium' if item.Money_Manager_3yr > 20 else 'percentile-high' }}">{{
-                        item.Money_Manager_3yr }}</span></td>
+                    <td class="">{{
+                        "{:,}".format(item.Money_Manager_Net) }}</td>
+                    <td class="">{{"{:,}".format(item.Change_Money_Manager_Net) }}</td>
+                    <td><span
+                            class="percentile {{ 'percentile-low' if item.Money_Manager_25w > 80 else 'percentile-medium' if item.Money_Manager_25w > 20 else 'percentile-high' }}">{{
+                            item.Money_Manager_25w }}</span></td>
+                    <td><span
+                            class="percentile {{ 'percentile-low' if item.Money_Manager_52w > 80 else 'percentile-medium' if item.Money_Manager_52w > 20 else 'percentile-high' }}">{{
+                            item.Money_Manager_52w }}</span></td>
+                    <td><span
+                            class="percentile {{ 'percentile-low' if item.Money_Manager_3yr > 80 else 'percentile-medium' if item.Money_Manager_3yr > 20 else 'percentile-high' }}">{{
+                            item.Money_Manager_3yr }}</span></td>
 
-                <td class="">{{ "{:,}".format(item.Gap) }}
-                </td>
-                <td><span
-                        class="percentile {{ 'percentile-low' if item.Gap_25w > 80 else 'percentile-medium' if item.Gap_25w > 20 else 'percentile-high' }}">{{
-                        item.Gap_25w }}</span></td>
-                <td><span
-                        class="percentile {{ 'percentile-low' if item.Gap_52w > 80 else 'percentile-medium' if item.Gap_52w > 20 else 'percentile-high' }}">{{
-                        item.Gap_52w }}</span></td>
-                <td><span
-                        class="percentile {{ 'percentile-low' if item.Gap_3yr > 80 else 'percentile-medium' if item.Gap_3yr > 20 else 'percentile-high' }}">{{
-                        item.Gap_3yr }}</span></td>
+                    <td class="">{{ "{:,}".format(item.Gap) }}
+                    </td>
+                    <td><span
+                            class="percentile {{ 'percentile-low' if item.Gap_25w > 80 else 'percentile-medium' if item.Gap_25w > 20 else 'percentile-high' }}">{{
+                            item.Gap_25w }}</span></td>
+                    <td><span
+                            class="percentile {{ 'percentile-low' if item.Gap_52w > 80 else 'percentile-medium' if item.Gap_52w > 20 else 'percentile-high' }}">{{
+                            item.Gap_52w }}</span></td>
+                    <td><span
+                            class="percentile {{ 'percentile-low' if item.Gap_3yr > 80 else 'percentile-medium' if item.Gap_3yr > 20 else 'percentile-high' }}">{{
+                            item.Gap_3yr }}</span></td>
 
-                <td>{{ "{:,}".format(item.Open_Interest_All) }}</td>
-                <td class="">{{
-                    "{:,}".format(item.Change_in_Open_Interest_All) }}</td>
-            </tr>
-            {% endfor %}
-            {% endfor %}
-        </tbody>
-    </table>
+                    <td>{{ "{:,}".format(item.Open_Interest_All) }}</td>
+                    <td class="">{{
+                        "{:,}".format(item.Change_in_Open_Interest_All) }}</td>
+                </tr>
+                {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
 
-    <h2>Ideen des Reports</h2>
-    <span>
-        <ul>
-            <li>Wenn Gap zwischen Producer und Money Manager ungewöhnlich klein ist, könnte ein Preisanstieg bevorstehen
-            </li>
-            <li>Money Manager haben nicht grundlos so viel Money. Stell dich nicht unbedingt gegen sie</li>
-        </ul>
-
-    </span>
-
+        <div class="key-insights">
+            <h3>Key Insights</h3>
+            <ul>
+                <li>Net = Long Positions - Short Positions. It's positive if more bullish positions are in place than
+                    bearish positions.</li>
+                <li>A unusually small gap between Producer and Money Manager positions may indicate an impending price
+                    increase.</li>
+                <li>Money Managers' positions are often based on substantial research. Consider their positioning in
+                    your analysis.</li>
+                <li>25w, 52w, 3y are percentiles over the desired time frame. Example: 60 means the net position has
+                    been higher in 60% of the cases. We prefer high percentiles for Producer and low percentiles for
+                    money manager.</li>
+            </ul>
+        </div>
+    </div>
 </body>
 
 </html>
