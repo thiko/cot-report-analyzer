@@ -1,7 +1,10 @@
+import io
 import os
-import pandas as pd
-import requests, zipfile, io
+import zipfile
 from datetime import date
+
+import pandas as pd
+import requests
 from bs4 import BeautifulSoup
 
 # cot_hist - downloads compressed bulk files
@@ -87,7 +90,7 @@ def cot_hist(cot_report_type = "legacy_fut", store_txt=True, verbose=True):
 
 # cot_year - downloads single years
 
-def cot_year(year = 2020, cot_report_type = "legacy_fut", store_txt=True, verbose=True):    
+def cot_year(year = 2020, cot_report_type = "legacy_fut", store_txt=True, verbose=True, output_tmp_dir: str = '/'):    
     '''Downloads the selected COT report historical data for a single year
     from the cftc.gov webpage as zip file, unzips the downloaded folder and returns
     the cot data as DataFrame.
@@ -117,31 +120,31 @@ def cot_year(year = 2020, cot_report_type = "legacy_fut", store_txt=True, verbos
     try: 
         if cot_report_type== "legacy_fut": 
            rep = "deacot"
-           txt ="annual.txt"
+           txt = f"{output_tmp_dir}/annual.txt"
        
         elif cot_report_type == "legacy_futopt": 
            rep = "deahistfo"
-           txt ="annualof.txt"
+           txt = f"{output_tmp_dir}/annualof.txt"
       
         elif cot_report_type == "supplemental_futopt": 
            rep = "dea_cit_txt_"
-           txt ="annualci.txt"
+           txt = f"{output_tmp_dir}/annualci.txt"
  
         elif cot_report_type == "disaggregated_fut": 
            rep = "fut_disagg_txt_"
-           txt ="f_year.txt"
+           txt = f"{output_tmp_dir}/f_year.txt"
 
         elif cot_report_type == "disaggregated_futopt": 
            rep = "com_disagg_txt_"
-           txt ="c_year.txt"
+           txt = f"{output_tmp_dir}/c_year.txt"
 
         elif cot_report_type == "traders_in_financial_futures_fut": 
            rep = "fut_fin_txt_"
-           txt ="FinFutYY.txt"
+           txt = f"{output_tmp_dir}/FinFutYY.txt"
 
         elif cot_report_type == "traders_in_financial_futures_futopt": 
            rep = "com_fin_txt_"
-           txt ="FinComYY.txt"
+           txt = f"{output_tmp_dir}/FinComYY.txt"
 
     except ValueError:    
         print("""Input needs to be either:
@@ -151,9 +154,10 @@ def cot_year(year = 2020, cot_report_type = "legacy_fut", store_txt=True, verbos
                 "traders_in_financial_futures_futopt" """)
     
     cot_url = "https://cftc.gov/files/dea/history/" + rep + str(year) + ".zip"
+    print(f'loading data from: {cot_url}')
     r = requests.get(cot_url)
     z = zipfile.ZipFile(io.BytesIO(r.content))
-    z.extractall()
+    z.extractall(path=output_tmp_dir)
     df = pd.read_csv(txt, low_memory=False)  
     if verbose: print("Downloaded single year data from:", year)
     if store_txt:

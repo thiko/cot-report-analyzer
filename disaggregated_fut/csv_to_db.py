@@ -2,7 +2,7 @@ import csv
 import sqlite3
 from datetime import datetime
 
-from commodity_data import CommodityData
+from disaggregated_fut.commodity_data import CommodityData
 
 # Database file name
 DB_FILE = 'cftc_data.db'
@@ -110,12 +110,11 @@ def insert_data(conn, data):
         return False
 
 # Process the CSV file
-def process_csv(file_path):
+def process_csv(csv_file, db_conn: sqlite3.Connection):
     commodity_data = CommodityData()
-    conn = sqlite3.connect(DB_FILE)
-    create_schema(conn)
+    create_schema(db_conn)
 
-    with open(file_path, 'r') as csvfile:
+    with open(csv_file, 'r') as csvfile:
         #csv_reader = csv.reader(csvfile)
         csv_reader = csv.DictReader(csvfile)
         #next(csv_reader)  # Skip header row
@@ -170,12 +169,11 @@ def process_csv(file_path):
                 row['Pct_of_OI_Tot_Rept_Short_All']
             )
 
-            if insert_data(conn, data):
+            if insert_data(db_conn, data):
                 print(f"Inserted data for {name} on {category}")
             else:
                 print(f"Skipped existing data for {name} on {category}")
 
-    conn.close()
 
 # Main execution
 if __name__ == "__main__":

@@ -51,16 +51,13 @@ def get_historical_data_and_percentiles(conn, commodity_code, column_type, curre
 
     return current_value, percentile_25w, percentile_52w, percentile_3yr
 
-def generate_report(date_str: str = None): 
-
-    # Connect to the SQLite database
-    conn = sqlite3.connect('cftc_data.db')
+def generate_report(db_connection: sqlite3.Connection, report_output_dir: str, date_str: str = None): 
 
     # Get the most recent date in the database
     latest_date_string = date_str
     
     if date_str is None:
-        latest_date_string = pd.read_sql_query("SELECT MAX(Report_Date) as max_date FROM cftc_reports_disag_fut", conn).iloc[0]['max_date']
+        latest_date_string = pd.read_sql_query("SELECT MAX(Report_Date) as max_date FROM cftc_reports_disag_fut", db_connection).iloc[0]['max_date']
     
     latest_date = datetime.strptime(latest_date_string, '%Y-%m-%d')
 
@@ -88,7 +85,7 @@ def generate_report(date_str: str = None):
     ORDER BY Commodity_Category, Commodity_Name
     """
 
-    df = pd.read_sql_query(query, conn, params=(latest_date_string,))
+    df = pd.read_sql_query(query, db_connection, params=(latest_date_string,))
     print(f'dataframe size: {df.size}')
 
     # Calculate additional columns
@@ -105,11 +102,11 @@ def generate_report(date_str: str = None):
     for index, row in df.iterrows():
         commodity_code = row['CFTC_Commodity_Code']
         
-        _, df.loc[index, 'Producer_25w'], df.loc[index, 'Producer_52w'], df.loc[index, 'Producer_3yr'] = get_historical_data_and_percentiles(conn, commodity_code, 'Producer', latest_date)
-        _, df.loc[index, 'Money_Manager_25w'], df.loc[index, 'Money_Manager_52w'], df.loc[index, 'Money_Manager_3yr'] = get_historical_data_and_percentiles(conn, commodity_code, 'Money_Manager', latest_date)
+        _, df.loc[index, 'Producer_25w'], df.loc[index, 'Producer_52w'], df.loc[index, 'Producer_3yr'] = get_historical_data_and_percentiles(db_connection, commodity_code, 'Producer', latest_date)
+        _, df.loc[index, 'Money_Manager_25w'], df.loc[index, 'Money_Manager_52w'], df.loc[index, 'Money_Manager_3yr'] = get_historical_data_and_percentiles(db_connection, commodity_code, 'Money_Manager', latest_date)
         
-        _, df.loc[index, 'Total_25w'], df.loc[index, 'Total_52w'], df.loc[index, 'Total_3yr'] = get_historical_data_and_percentiles(conn, commodity_code, 'Total', latest_date)
-        _, df.loc[index, 'Gap_25w'], df.loc[index, 'Gap_52w'], df.loc[index, 'Gap_3yr'] = get_historical_data_and_percentiles(conn, commodity_code, 'Gap', latest_date)
+        _, df.loc[index, 'Total_25w'], df.loc[index, 'Total_52w'], df.loc[index, 'Total_3yr'] = get_historical_data_and_percentiles(db_connection, commodity_code, 'Total', latest_date)
+        _, df.loc[index, 'Gap_25w'], df.loc[index, 'Gap_52w'], df.loc[index, 'Gap_3yr'] = get_historical_data_and_percentiles(db_connection, commodity_code, 'Gap', latest_date)
 
     # Group data by category
     grouped_data = df.groupby('Commodity_Category')
@@ -125,17 +122,16 @@ def generate_report(date_str: str = None):
 
     # Set up Jinja2 environment
     env = Environment(loader=FileSystemLoader('.'))
-    template = env.get_template('template.html')
+    template = env.get_template('templates/disagregated_fut_template.html')
 
     # Render HTML
     html_output = template.render(data=data, report_date=latest_date.strftime('%Y-%m-%d'))
 
     # Save HTML file
-    with open(f'{latest_date.strftime("%Y-%m-%d")}_cot_analysis.html', 'w') as f:
+    outputfile = f'{report_output_dir}/{latest_date.strftime("%Y-%m-%d")}_cot_analysis.html'
+    with open(outputfile, 'w') as f:
         f.write(html_output)
 
-    # Close the database connection
-    conn.close()
 
 if __name__ == "__main__":
     target_date = None # datetime(2009, 10, 5).date
