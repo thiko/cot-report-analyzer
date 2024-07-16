@@ -31,10 +31,10 @@ def main():
     print(f"Debug-Modus: {'An' if debug_mode else 'Aus'}")
 
     db_connection = sqlite3.connect(f'{tmp_output_dir}/{database_file}')
-    
-    load_data_and_generate_report(tmp_output_dir, reports_output_dir, db_connection)
-
-    db_connection.close()
+    try:    
+        load_data_and_generate_report(tmp_output_dir, reports_output_dir, db_connection)
+    finally:
+        db_connection.close()
 
 if __name__ == "__main__":
     main()
