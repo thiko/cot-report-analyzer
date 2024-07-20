@@ -14,21 +14,36 @@ from disaggregated_fut.report_generator import generate_report
 #sys.path.append("..")
 
 
-target_date = datetime(2023, 1, 3)
-target_date_str = target_date.strftime('%Y-%m-%d')
+#target_date = datetime(2023, 1, 3)
+#target_date_str = target_date.strftime('%Y-%m-%d')
 
-def load_data_and_generate_report(tmp_output_dir: str, report_output_dir: str, db_connection: Connection):
+REPORT_NAME_POSTFIX = 'disaggregated_fut.csv'
 
-    for year in range(target_date.year, target_date.year - 5, -1):
+def load_data_and_generate_report(tmp_output_dir: str, report_output_dir: str, db_connection: Connection, target_date: datetime):
+    
+    target_date_str = target_date.strftime('%Y-%m-%d')
 
-        adjusted_target_date = target_date.replace(year=year)
+    # download the COT data for this year in any case
+    csv_file = download_to_csv(tmp_output_dir=tmp_output_dir, year=target_date.year)
+    process_csv(csv_file, db_connection)
 
-        csv_file = f'{tmp_output_dir}/{year}_disaggregated_fut.csv'
+    # download COT data for previous years only if its not present alreay
+    for year in range(target_date.year - 1, target_date.year - 5, -1):
+
+        csv_file = f'{tmp_output_dir}/{year}_{REPORT_NAME_POSTFIX}'
 
         if not os.path.exists(csv_file):
-            df = cot.cot_year(output_tmp_dir=tmp_output_dir, year = year, cot_report_type = 'disaggregated_fut')
-            df.to_csv(csv_file)
+            csv_file = download_to_csv(tmp_output_dir=tmp_output_dir, year=year)
             
         process_csv(csv_file, db_connection)
 
     generate_report(db_connection, report_output_dir, target_date_str)
+
+
+def download_to_csv(tmp_output_dir: str, year: int) -> str:
+    csv_file = f'{tmp_output_dir}/{year}_{REPORT_NAME_POSTFIX}'
+    df = cot.cot_year(output_tmp_dir=tmp_output_dir, year = year, cot_report_type = 'disaggregated_fut')
+    df.to_csv(csv_file)
+
+    return csv_file
+    
