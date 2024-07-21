@@ -5,3 +5,7 @@
 - Wheat SRW: https://www.cmegroup.com/markets/agriculture/grains/wheat.settlements.html
 
 - https://www.cmegroup.com/markets/agriculture.html#products
+
+
+
+- Funny repository: https://github.com/je-suis-tm/web-scraping/blob/master/WallStreetBets.py
