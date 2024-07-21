@@ -11,3 +11,7 @@ annualof.txt
 c_year.txt
 f_year.txt
 *.db
+
+tmp.html
+
+outputs/reports/*.html
