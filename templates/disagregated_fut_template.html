@@ -174,7 +174,7 @@
                 </tr>
                 {% for item in group.commodities %}
                 <tr>
-                    <td class="symbol">{{ item.Commodity_Name }}</td>
+                    <td class="symbol">{{ item.Commodity_Name }} ({{ item.Market_Symbol }})</td>
 
                     <td class="">{{"{:,}".format(item.Producer_Net) }}</td>
                     <td class="">{{"{:,}".format(item.Change_Producer_Net) }}</td>

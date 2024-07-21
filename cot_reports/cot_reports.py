@@ -1,4 +1,5 @@
 import io
+import logging
 import os
 import zipfile
 from datetime import date
@@ -6,6 +7,8 @@ from datetime import date
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
+
+logger = logging.getLogger(__name__)
 
 # cot_hist - downloads compressed bulk files
 
@@ -36,39 +39,39 @@ def cot_hist(cot_report_type = "legacy_fut", store_txt=True, verbose=True):
         if cot_report_type== "legacy_fut": 
            url_end = "deacot1986_2016"
            txt = "FUT86_16.txt"
-           if verbose: print("Selected: COT Legacy report. Futures only.")
+           if verbose: logger.info("Selected: COT Legacy report. Futures only.")
 
         elif cot_report_type == "legacy_futopt": 
            url_end = "deahistfo_1995_2016"
            txt = "Com95_16.txt"
-           if verbose: print("Selected: COT Legacy report. Futures and Options.")
+           if verbose: logger.info("Selected: COT Legacy report. Futures and Options.")
 
         elif cot_report_type == "supplemental_futopt": 
            url_end = "dea_cit_txt_2006_2016"
            txt = "CIT06_16.txt"
-           if verbose: print("Selected: COT Sumpplemental report. Futures and Options.")
+           if verbose: logger.info("Selected: COT Sumpplemental report. Futures and Options.")
      
         elif cot_report_type == "disaggregated_fut": 
            url_end = "fut_disagg_txt_hist_2006_2016"
            txt = "F_Disagg06_16.txt"
-           if verbose: print("Selected: COT Disaggregated report. Futures only.")
+           if verbose: logger.info("Selected: COT Disaggregated report. Futures only.")
 
         elif cot_report_type == "disaggregated_futopt": 
            url_end = "com_disagg_txt_hist_2006_2016"
            txt = "C_Disagg06_16.txt"
-           if verbose: print("Selected: COT Disaggregated report. Futures and Options.")
+           if verbose: logger.info("Selected: COT Disaggregated report. Futures and Options.")
 
         elif cot_report_type == "traders_in_financial_futures_fut": 
            url_end = "fin_fut_txt_2006_2016"
            txt = "F_TFF_2006_2016.txt" 
-           if verbose: print("Selected: COT Traders in Financial Futures report. Futures only.")
+           if verbose: logger.info("Selected: COT Traders in Financial Futures report. Futures only.")
 
         elif cot_report_type == "traders_in_financial_futures_futopt": 
            url_end = "fin_com_txt_2006_2016"
            txt = "C_TFF_2006_2016.txt" 
-           if verbose: print("Selected: COT Traders in Financial Futures report. Futures and Options.")
+           if verbose: logger.info("Selected: COT Traders in Financial Futures report. Futures and Options.")
     except ValueError:    
-           if verbose: print("""Input needs to be either:
+           if verbose: logger.info("""Input needs to be either:
                 "legacy_fut", "legacy_futopt", supplemental_futopt",
                 "disaggregated_fut", "disaggregated_futopt", 
                 "traders_in_financial_futures_fut" or
@@ -80,7 +83,7 @@ def cot_hist(cot_report_type = "legacy_fut", store_txt=True, verbose=True):
     z.extractall()
     df = pd.read_csv(txt, low_memory=False)
     if store_txt:
-        if verbose: print("Stored the extracted file", txt, "in the working directory.")
+        if verbose: logger.info("Stored the extracted file", txt, "in the working directory.")
     else:
         os.remove(txt)
     return df
@@ -116,7 +119,7 @@ def cot_year(year = 2020, cot_report_type = "legacy_fut", store_txt=True, verbos
         
     Raises:
         ValueError: Raises an exception and returns the argument options.'''    
-    if verbose: print("Selected:", cot_report_type)
+    if verbose: logger.info(f"Selected: {cot_report_type}")
     try: 
         if cot_report_type== "legacy_fut": 
            rep = "deacot"
@@ -147,21 +150,21 @@ def cot_year(year = 2020, cot_report_type = "legacy_fut", store_txt=True, verbos
            txt = f"{output_tmp_dir}/FinComYY.txt"
 
     except ValueError:    
-        print("""Input needs to be either:
+        logger.info("""Input needs to be either:
                 "legacy_fut", "legacy_futopt", supplemental_futopt",
                 "disaggregated_fut", "disaggregated_futopt", 
                 "traders_in_financial_futures_fut" or
                 "traders_in_financial_futures_futopt" """)
     
     cot_url = "https://cftc.gov/files/dea/history/" + rep + str(year) + ".zip"
-    print(f'loading data from: {cot_url}')
+    logger.info(f'loading data from: {cot_url}')
     r = requests.get(cot_url)
     z = zipfile.ZipFile(io.BytesIO(r.content))
     z.extractall(path=output_tmp_dir)
     df = pd.read_csv(txt, low_memory=False)  
-    if verbose: print("Downloaded single year data from:", year)
+    if verbose: logger.info(f"Downloaded single year data from: {year}")
     if store_txt:
-        if verbose: print("Stored the file", txt, "in the working directory.")
+        if verbose: logger.info(f"Stored the file {txt} in the working directory.")
     else:
         os.remove(txt)
     return df
@@ -229,7 +232,7 @@ def cot_all_reports(store_txt=True, verbose=True):
   l = ["legacy_fut", "legacy_futopt", "supplemental_futopt", "disaggregated_fut", "disaggregated_futopt", "traders_in_financial_futures_fut", "traders_in_financial_futures_futopt"]
 
   for report in l: 
-    if verbose: print(report)
+    if verbose: logger.info(report)
     temp = '{}'.format(report)
     vars()[temp] = cot_all(cot_report_type=report, store_txt=store_txt, verbose=verbose)
 
@@ -257,8 +260,8 @@ def cot_description():
   text = [list(g) for k, g in groupby(text, lambda x: x != split_at) if k][1]
   split_at = "Supplemental Report"
   text = [list(g) for k, g in groupby(text, lambda x: x != split_at) if k][0]
-  print("scraped texts from cftc.gov:")
-  print(text)
+  logger.info("scraped texts from cftc.gov:")
+  logger.info(text)
   x = {'var_info': ["open interest (oi)",
                     "reportable positions",
                     "commercial (c) and non-commercial (nc)",

@@ -1,8 +1,10 @@
+import logging
 import os
 from datetime import datetime
 
 from jinja2 import Environment, FileSystemLoader
 
+logger = logging.getLogger(__name__)
 
 def generate_output_summary(output_directory: str):
     # Set up Jinja2 environment
@@ -38,4 +40,4 @@ def generate_output_summary(output_directory: str):
     with open(f'{report_dir}/report_list.html', 'w') as f:
         f.write(output)
 
-    print("HTML file generated successfully.")
+    logger.info("HTML file generated successfully.")

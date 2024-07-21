@@ -1,4 +1,5 @@
 import bisect
+import logging
 import sqlite3
 from datetime import datetime, timedelta
 
@@ -6,6 +7,7 @@ import numpy as np
 import pandas as pd
 from jinja2 import Environment, FileSystemLoader
 
+logger = logging.getLogger(__name__)
 
 # Function to calculate percentiles
 def calculate_percentile(data, current_value):
@@ -61,12 +63,13 @@ def generate_report(db_connection: sqlite3.Connection, report_output_dir: str, d
     
     latest_date = datetime.strptime(latest_date_string, '%Y-%m-%d')
 
-    print(f'last date: {latest_date}')
+    logger.info(f'last date: {latest_date}')
 
     # Query to get the main data
     query = """
     SELECT 
         Commodity_Name,
+        Market_Symbol,
         Commodity_Category,
         CFTC_Commodity_Code,
         SUM(Open_Interest_All) as Open_Interest_All,
@@ -86,7 +89,7 @@ def generate_report(db_connection: sqlite3.Connection, report_output_dir: str, d
     """
 
     df = pd.read_sql_query(query, db_connection, params=(latest_date_string,))
-    print(f'dataframe size: {df.size}')
+    logger.info(f'dataframe size: {df.size}')
 
     # Calculate additional columns
     df['Producer_Net'] = df['Prod_Merc_Positions_Long_All'] - df['Prod_Merc_Positions_Short_All']

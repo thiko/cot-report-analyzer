@@ -1,8 +1,10 @@
 import argparse
 import configparser
+import logging
 import sqlite3
 from datetime import datetime, timedelta
 
+from database.migrate import execute_sql_files
 from disaggregated_fut.disaggregated_fut import load_data_and_generate_report
 from summary_report.generate_summary import generate_output_summary
 
@@ -30,16 +32,20 @@ def main():
     # load config
     config = load_config(args.config)
     target_date = datetime.strptime(args.date, DATETIME_FOMRAT)
-    
+
     tmp_output_dir = config['App']['output_tmp_directory']
     reports_output_dir = config['App']['output_reports_directory']
     database_file = config['App']['database_filename']
 
     debug_mode = config['DEFAULT'].getboolean('debug')
+    log_level = logging.DEBUG if debug_mode == True else logging.INFO
+    logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=log_level)
     
     print(f"Debug-Mode: {'On' if debug_mode else 'Off'}")
 
     db_connection = sqlite3.connect(f'{tmp_output_dir}/{database_file}')
+    execute_sql_files('database/resources', db_connection)
+
     try:    
         load_data_and_generate_report(tmp_output_dir, reports_output_dir, db_connection, target_date)
         generate_output_summary(reports_output_dir)
