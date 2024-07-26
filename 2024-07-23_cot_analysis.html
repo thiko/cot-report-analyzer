@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoT Disaggregated Report Analyser</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f7f7f7;
+            color: #333;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .container {
+
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        h1,
+        h2 {
+            color: #003366;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 1.8em;
+            margin-top: 30px;
+        }
+
+        p {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 30px;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+        }
+
+        th {
+            background-color: #003366;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        td {
+            text-align: right;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .category {
+            text-align: left;
+            font-weight: bold;
+            background-color: #e6e6e6;
+        }
+
+        .symbol {
+            text-align: left;
+        }
+
+        .percentile {
+            width: 35px;
+            height: 20px;
+            display: inline-block;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            line-height: 20px;
+            border-radius: 3px;
+        }
+
+        .percentile-high {
+            background-color: #006400;
+        }
+
+        .percentile-medium {
+            background-color: #FFA500;
+            color: black;
+        }
+
+        .percentile-low {
+            background-color: #8B0000;
+        }
+
+        .key-insights {
+            background-color: #f0f0f0;
+            padding: 20px;
+            border-radius: 5px;
+        }
+
+        .key-insights h3 {
+            margin-top: 0;
+            color: #003366;
+        }
+
+        @media (max-width: 768px) {
+            table {
+                font-size: 14px;
+            }
+
+            th,
+            td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>CoT Disaggregated Report Analysis</h1>
+        <h2>CoT Commodities</h2>
+        <p>Date: 2024-07-23</p>
+        <table>
+            <thead>
+                <tr>
+                    <th class="symbol">Symbol</th>
+                    <th colspan="5">Producer/Consumer</th>
+                    <th colspan="5">Money Manager</th>
+                    <th colspan="4">Gap</th>
+                    <th colspan="2">Open Interest</th>
+                </tr>
+                <tr>
+
+                    <th></th>
+                    <th>Net</th>
+                    <th>Change</th>
+                    <th>25w</th>
+                    <th>52w</th>
+                    <th>3yr</th>
+                    <th>Net</th>
+                    <th>Change</th>
+                    <th>25w</th>
+                    <th>52w</th>
+                    <th>3yr</th>
+                    <th>Net</th>
+                    <th>25w</th>
+                    <th>52w</th>
+                    <th>3yr</th>
+                    <th>Value</th>
+                    <th>Change</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+                <tr>
+                    <td colspan="17" class="category">Energy</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Crude Oil (CL)</td>
+
+                    <td class="">84,301</td>
+                    <td class="">6,605.0</td>
+                    <td><span
+                            class="percentile percentile-medium">40.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">50.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">69.0</span></td>
+
+                    <td class="">225,041</td>
+                    <td class="">-20,850.0</td>
+                    <td><span
+                            class="percentile percentile-low">84.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">81.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">84.0</span></td>
+
+                    <td class="">140,740
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">68.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">63.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">60.0</span></td>
+
+                    <td>1,809,094</td>
+                    <td class="">-22,118.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Ethanol (EH)</td>
+
+                    <td class="">-7,704</td>
+                    <td class="">-186.0</td>
+                    <td><span
+                            class="percentile percentile-low">8.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">4.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">2.0</span></td>
+
+                    <td class="">6,072</td>
+                    <td class="">-532.0</td>
+                    <td><span
+                            class="percentile percentile-medium">76.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">69.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">76.0</span></td>
+
+                    <td class="">13,776
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">80.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">87.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">88.0</span></td>
+
+                    <td>40,213</td>
+                    <td class="">38.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Fuel Oil (FO)</td>
+
+                    <td class="">618</td>
+                    <td class="">0.0</td>
+                    <td><span
+                            class="percentile percentile-high">91.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">91.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">81.0</span></td>
+
+                    <td class="">0</td>
+                    <td class="">0.0</td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+
+                    <td class="">-618
+                    </td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">18.0</span></td>
+
+                    <td>3,866</td>
+                    <td class="">0.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Fuel Oil Crack (FOC)</td>
+
+                    <td class="">-2,635</td>
+                    <td class="">155.0</td>
+                    <td><span
+                            class="percentile percentile-low">12.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">6.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">3.0</span></td>
+
+                    <td class="">0</td>
+                    <td class="">-825.0</td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+
+                    <td class="">2,635
+                    </td>
+                    <td><span
+                            class="percentile percentile-low">84.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">92.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">95.0</span></td>
+
+                    <td>18,085</td>
+                    <td class="">600.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Gasoline (RB)</td>
+
+                    <td class="">-67,668</td>
+                    <td class="">7,425.0</td>
+                    <td><span
+                            class="percentile percentile-high">96.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">94.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">95.0</span></td>
+
+                    <td class="">22,520</td>
+                    <td class="">3,031.0</td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+
+                    <td class="">90,188
+                    </td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">2.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">1.0</span></td>
+
+                    <td>396,352</td>
+                    <td class="">-1,158.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Low Carbon Energy (CLEX)</td>
+
+                    <td class="">-304</td>
+                    <td class="">29.0</td>
+                    <td><span
+                            class="percentile percentile-medium">48.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">62.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">86.0</span></td>
+
+                    <td class="">166</td>
+                    <td class="">55.0</td>
+                    <td><span
+                            class="percentile percentile-medium">68.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">35.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">13.0</span></td>
+
+                    <td class="">470
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">56.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">31.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">11.0</span></td>
+
+                    <td>5,532</td>
+                    <td class="">-41.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Natural Gas (NG)</td>
+
+                    <td class="">-65,068</td>
+                    <td class="">8,308.0</td>
+                    <td><span
+                            class="percentile percentile-high">96.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">96.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">81.0</span></td>
+
+                    <td class="">-57,511</td>
+                    <td class="">8,464.0</td>
+                    <td><span
+                            class="percentile percentile-medium">56.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">44.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">40.0</span></td>
+
+                    <td class="">7,557
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">36.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">29.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">30.0</span></td>
+
+                    <td>1,532,886</td>
+                    <td class="">-56,380.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">ULSD NY Harbor (HO)</td>
+
+                    <td class="">-89,874</td>
+                    <td class="">1,629.0</td>
+                    <td><span
+                            class="percentile percentile-medium">24.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">56.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">39.0</span></td>
+
+                    <td class="">-15,517</td>
+                    <td class="">2,557.0</td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+
+                    <td class="">74,357
+                    </td>
+                    <td><span
+                            class="percentile percentile-high">4.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">2.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">6.0</span></td>
+
+                    <td>379,769</td>
+                    <td class="">5,368.0</td>
+                </tr>
+                
+                
+                <tr>
+                    <td colspan="17" class="category">Grains</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Corn (ZC)</td>
+
+                    <td class="">-1,708</td>
+                    <td class="">-22,675.0</td>
+                    <td><span
+                            class="percentile percentile-medium">64.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">77.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">92.0</span></td>
+
+                    <td class="">-333,885</td>
+                    <td class="">-8,448.0</td>
+                    <td><span
+                            class="percentile percentile-high">12.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">6.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">2.0</span></td>
+
+                    <td class="">-332,177
+                    </td>
+                    <td><span
+                            class="percentile percentile-high">20.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">10.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">3.0</span></td>
+
+                    <td>1,597,184</td>
+                    <td class="">23,860.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Oats (ZO)</td>
+
+                    <td class="">806</td>
+                    <td class="">213.0</td>
+                    <td><span
+                            class="percentile percentile-high">91.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">97.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">99.0</span></td>
+
+                    <td class="">-1,620</td>
+                    <td class="">49.0</td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">5.0</span></td>
+
+                    <td class="">-2,426
+                    </td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+
+                    <td>5,392</td>
+                    <td class="">-86.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Rough Rice (ZR)</td>
+
+                    <td class="">135</td>
+                    <td class="">796.0</td>
+                    <td><span
+                            class="percentile percentile-high">96.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">98.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">88.0</span></td>
+
+                    <td class="">-2,206</td>
+                    <td class="">79.0</td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">2.0</span></td>
+
+                    <td class="">-2,341
+                    </td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">6.0</span></td>
+
+                    <td>10,032</td>
+                    <td class="">950.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Soybean Meal (ZM)</td>
+
+                    <td class="">-148,171</td>
+                    <td class="">5,400.0</td>
+                    <td><span
+                            class="percentile percentile-medium">44.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">62.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">81.0</span></td>
+
+                    <td class="">16,559</td>
+                    <td class="">-7,720.0</td>
+                    <td><span
+                            class="percentile percentile-medium">44.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">29.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">17.0</span></td>
+
+                    <td class="">164,730
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">48.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">31.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">17.0</span></td>
+
+                    <td>534,537</td>
+                    <td class="">1,468.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Soybean Oil (ZL)</td>
+
+                    <td class="">-143,622</td>
+                    <td class="">1,130.0</td>
+                    <td><span
+                            class="percentile percentile-low">8.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">23.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">53.0</span></td>
+
+                    <td class="">-27,197</td>
+                    <td class="">-13,035.0</td>
+                    <td><span
+                            class="percentile percentile-medium">72.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">48.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">18.0</span></td>
+
+                    <td class="">116,425
+                    </td>
+                    <td><span
+                            class="percentile percentile-low">84.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">62.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">29.0</span></td>
+
+                    <td>578,968</td>
+                    <td class="">23,910.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Soybeans (ZS)</td>
+
+                    <td class="">24,989</td>
+                    <td class="">-22,523.0</td>
+                    <td><span
+                            class="percentile percentile-medium">36.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">67.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">89.0</span></td>
+
+                    <td class="">-172,945</td>
+                    <td class="">-12,327.0</td>
+                    <td><span
+                            class="percentile percentile-high">4.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">2.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">1.0</span></td>
+
+                    <td class="">-197,934
+                    </td>
+                    <td><span
+                            class="percentile percentile-high">20.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">10.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">3.0</span></td>
+
+                    <td>834,895</td>
+                    <td class="">-1,398.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Wheat (ZW)</td>
+
+                    <td class="">-17,738</td>
+                    <td class="">-477.0</td>
+                    <td><span
+                            class="percentile percentile-medium">68.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">52.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">70.0</span></td>
+
+                    <td class="">-73,159</td>
+                    <td class="">3,238.0</td>
+                    <td><span
+                            class="percentile percentile-medium">32.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">50.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">29.0</span></td>
+
+                    <td class="">-55,421
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">28.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">46.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">28.0</span></td>
+
+                    <td>421,227</td>
+                    <td class="">7,342.0</td>
+                </tr>
+                
+                
+                <tr>
+                    <td colspan="17" class="category">Meats</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Feeder Cattle (GF)</td>
+
+                    <td class="">5,689</td>
+                    <td class="">-31.0</td>
+                    <td><span
+                            class="percentile percentile-high">92.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">94.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">98.0</span></td>
+
+                    <td class="">2,781</td>
+                    <td class="">5.0</td>
+                    <td><span
+                            class="percentile percentile-high">8.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">29.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">54.0</span></td>
+
+                    <td class="">-2,908
+                    </td>
+                    <td><span
+                            class="percentile percentile-high">4.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">23.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">40.0</span></td>
+
+                    <td>50,403</td>
+                    <td class="">1,170.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Lean Hogs (HE)</td>
+
+                    <td class="">-32,581</td>
+                    <td class="">-2,912.0</td>
+                    <td><span
+                            class="percentile percentile-high">88.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">65.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">79.0</span></td>
+
+                    <td class="">-6,158</td>
+                    <td class="">4,926.0</td>
+                    <td><span
+                            class="percentile percentile-high">16.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">21.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">17.0</span></td>
+
+                    <td class="">26,423
+                    </td>
+                    <td><span
+                            class="percentile percentile-high">12.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">29.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">19.0</span></td>
+
+                    <td>243,257</td>
+                    <td class="">-20,231.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Live Cattle (LE)</td>
+
+                    <td class="">-90,326</td>
+                    <td class="">1,658.0</td>
+                    <td><span
+                            class="percentile percentile-medium">76.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">71.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">87.0</span></td>
+
+                    <td class="">66,718</td>
+                    <td class="">2,042.0</td>
+                    <td><span
+                            class="percentile percentile-medium">80.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">67.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">62.0</span></td>
+
+                    <td class="">157,044
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">56.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">52.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">36.0</span></td>
+
+                    <td>325,916</td>
+                    <td class="">-1,826.0</td>
+                </tr>
+                
+                
+                <tr>
+                    <td colspan="17" class="category">Metal</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Aluminium (ALI)</td>
+
+                    <td class="">-10,000</td>
+                    <td class="">-514.0</td>
+                    <td><span
+                            class="percentile percentile-medium">40.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">71.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">88.0</span></td>
+
+                    <td class="">-2,220</td>
+                    <td class="">-745.0</td>
+                    <td><span
+                            class="percentile percentile-high">16.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">8.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">3.0</span></td>
+
+                    <td class="">7,780
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">56.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">27.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">11.0</span></td>
+
+                    <td>24,056</td>
+                    <td class="">975.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Cobalt (CB)</td>
+
+                    <td class="">-2,489</td>
+                    <td class="">-36.0</td>
+                    <td><span
+                            class="percentile percentile-medium">80.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">62.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">70.0</span></td>
+
+                    <td class="">2,918</td>
+                    <td class="">-80.0</td>
+                    <td><span
+                            class="percentile percentile-high">12.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">6.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">10.0</span></td>
+
+                    <td class="">5,407
+                    </td>
+                    <td><span
+                            class="percentile percentile-high">12.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">6.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">8.0</span></td>
+
+                    <td>17,650</td>
+                    <td class="">232.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Copper (HG)</td>
+
+                    <td class="">-67,889</td>
+                    <td class="">14,011.0</td>
+                    <td><span
+                            class="percentile percentile-medium">60.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">29.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">24.0</span></td>
+
+                    <td class="">21,631</td>
+                    <td class="">-10,755.0</td>
+                    <td><span
+                            class="percentile percentile-medium">32.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">67.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">67.0</span></td>
+
+                    <td class="">89,520
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">32.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">67.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">71.0</span></td>
+
+                    <td>254,535</td>
+                    <td class="">-15,795.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Gold (GC)</td>
+
+                    <td class="">-54,215</td>
+                    <td class="">6,103.0</td>
+                    <td><span
+                            class="percentile percentile-low">4.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">2.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">10.0</span></td>
+
+                    <td class="">162,860</td>
+                    <td class="">-4,493.0</td>
+                    <td><span
+                            class="percentile percentile-low">92.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">96.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">99.0</span></td>
+
+                    <td class="">217,075
+                    </td>
+                    <td><span
+                            class="percentile percentile-low">92.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">96.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">97.0</span></td>
+
+                    <td>572,306</td>
+                    <td class="">-7,556.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Lithium (LTH)</td>
+
+                    <td class="">-2,299</td>
+                    <td class="">-65.0</td>
+                    <td><span
+                            class="percentile percentile-low">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">0.0</span></td>
+
+                    <td class="">753</td>
+                    <td class="">156.0</td>
+                    <td><span
+                            class="percentile percentile-high">8.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">4.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">4.0</span></td>
+
+                    <td class="">3,052
+                    </td>
+                    <td><span
+                            class="percentile percentile-low">84.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">80.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">80.0</span></td>
+
+                    <td>25,381</td>
+                    <td class="">456.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Palladium (PA)</td>
+
+                    <td class="">2,266</td>
+                    <td class="">770.0</td>
+                    <td><span
+                            class="percentile percentile-medium">40.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">25.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">73.0</span></td>
+
+                    <td class="">-14,619</td>
+                    <td class="">1,791.0</td>
+                    <td><span
+                            class="percentile percentile-high">12.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">6.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">2.0</span></td>
+
+                    <td class="">-16,885
+                    </td>
+                    <td><span
+                            class="percentile percentile-high">20.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">10.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">3.0</span></td>
+
+                    <td>27,984</td>
+                    <td class="">3,368.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Platinum (PL)</td>
+
+                    <td class="">-26,231</td>
+                    <td class="">2,964.0</td>
+                    <td><span
+                            class="percentile percentile-medium">32.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">23.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">28.0</span></td>
+
+                    <td class="">1,633</td>
+                    <td class="">-6,671.0</td>
+                    <td><span
+                            class="percentile percentile-medium">44.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">56.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">52.0</span></td>
+
+                    <td class="">27,864
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">44.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">58.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">59.0</span></td>
+
+                    <td>80,402</td>
+                    <td class="">-3,014.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Silver (SI)</td>
+
+                    <td class="">-37,007</td>
+                    <td class="">3,541.0</td>
+                    <td><span
+                            class="percentile percentile-medium">68.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">38.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">29.0</span></td>
+
+                    <td class="">25,354</td>
+                    <td class="">-9,147.0</td>
+                    <td><span
+                            class="percentile percentile-high">20.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">62.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">72.0</span></td>
+
+                    <td class="">62,361
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">24.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">63.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">72.0</span></td>
+
+                    <td>157,106</td>
+                    <td class="">-9,535.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Steel (STL)</td>
+
+                    <td class="">774</td>
+                    <td class="">35.0</td>
+                    <td><span
+                            class="percentile percentile-high">96.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">98.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">60.0</span></td>
+
+                    <td class="">-4,920</td>
+                    <td class="">-131.0</td>
+                    <td><span
+                            class="percentile percentile-high">12.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">19.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">56.0</span></td>
+
+                    <td class="">-5,694
+                    </td>
+                    <td><span
+                            class="percentile percentile-high">4.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">6.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">46.0</span></td>
+
+                    <td>23,626</td>
+                    <td class="">505.0</td>
+                </tr>
+                
+                
+                <tr>
+                    <td colspan="17" class="category">Soft</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Butter (BT)</td>
+
+                    <td class="">76</td>
+                    <td class="">46.0</td>
+                    <td><span
+                            class="percentile percentile-low">4.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">2.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">1.0</span></td>
+
+                    <td class="">53</td>
+                    <td class="">-70.0</td>
+                    <td><span
+                            class="percentile percentile-high">8.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">27.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">69.0</span></td>
+
+                    <td class="">-23
+                    </td>
+                    <td><span
+                            class="percentile percentile-low">92.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">96.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">99.0</span></td>
+
+                    <td>9,536</td>
+                    <td class="">114.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Cocoa (CC)</td>
+
+                    <td class="">-38,437</td>
+                    <td class="">2,458.0</td>
+                    <td><span
+                            class="percentile percentile-medium">60.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">81.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">53.0</span></td>
+
+                    <td class="">25,975</td>
+                    <td class="">2,533.0</td>
+                    <td><span
+                            class="percentile percentile-medium">52.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">25.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">55.0</span></td>
+
+                    <td class="">64,412
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">44.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">21.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">51.0</span></td>
+
+                    <td>139,449</td>
+                    <td class="">1,646.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Coffee (KC)</td>
+
+                    <td class="">-49,920</td>
+                    <td class="">5,631.0</td>
+                    <td><span
+                            class="percentile percentile-high">92.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">69.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">60.0</span></td>
+
+                    <td class="">59,359</td>
+                    <td class="">-3,483.0</td>
+                    <td><span
+                            class="percentile percentile-medium">48.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">75.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">92.0</span></td>
+
+                    <td class="">109,279
+                    </td>
+                    <td><span
+                            class="percentile percentile-high">20.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">52.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">68.0</span></td>
+
+                    <td>241,117</td>
+                    <td class="">10,828.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Cotton (CT)</td>
+
+                    <td class="">-8,978</td>
+                    <td class="">9,545.0</td>
+                    <td><span
+                            class="percentile percentile-high">96.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">98.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">99.0</span></td>
+
+                    <td class="">-44,135</td>
+                    <td class="">4,745.0</td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+
+                    <td class="">-35,157
+                    </td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+
+                    <td>224,450</td>
+                    <td class="">5,829.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Lumber (LB)</td>
+
+                    <td class="">3,185</td>
+                    <td class="">-1,349.0</td>
+                    <td><span
+                            class="percentile percentile-medium">68.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">85.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">95.0</span></td>
+
+                    <td class="">-5,471</td>
+                    <td class="">-691.0</td>
+                    <td><span
+                            class="percentile percentile-medium">40.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">19.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">6.0</span></td>
+
+                    <td class="">-8,656
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">28.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">13.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">4.0</span></td>
+
+                    <td>9,962</td>
+                    <td class="">-635.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Milk (DA)</td>
+
+                    <td class="">2,431</td>
+                    <td class="">-1.0</td>
+                    <td><span
+                            class="percentile percentile-low">8.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">17.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">72.0</span></td>
+
+                    <td class="">1,960</td>
+                    <td class="">-364.0</td>
+                    <td><span
+                            class="percentile percentile-medium">64.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">83.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">85.0</span></td>
+
+                    <td class="">-471
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">72.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">87.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">47.0</span></td>
+
+                    <td>20,426</td>
+                    <td class="">238.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Orange Juice (OJ)</td>
+
+                    <td class="">-4,881</td>
+                    <td class="">283.0</td>
+                    <td><span
+                            class="percentile percentile-medium">36.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">17.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">57.0</span></td>
+
+                    <td class="">2,718</td>
+                    <td class="">236.0</td>
+                    <td><span
+                            class="percentile percentile-medium">80.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">52.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">33.0</span></td>
+
+                    <td class="">7,599
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">68.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">58.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">31.0</span></td>
+
+                    <td>9,633</td>
+                    <td class="">401.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Palm Oil (PO)</td>
+
+                    <td class="">19,386</td>
+                    <td class="">550.0</td>
+                    <td><span
+                            class="percentile percentile-medium">60.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">81.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">92.0</span></td>
+
+                    <td class="">-2,985</td>
+                    <td class="">65.0</td>
+                    <td><span
+                            class="percentile percentile-high">8.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">4.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">2.0</span></td>
+
+                    <td class="">-22,371
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">32.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">15.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">6.0</span></td>
+
+                    <td>44,041</td>
+                    <td class="">185.0</td>
+                </tr>
+                
+                <tr>
+                    <td class="symbol">Sugar (SB)</td>
+
+                    <td class="">-56,688</td>
+                    <td class="">33,981.0</td>
+                    <td><span
+                            class="percentile percentile-medium">36.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">58.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">83.0</span></td>
+
+                    <td class="">-1,800</td>
+                    <td class="">19,117.0</td>
+                    <td><span
+                            class="percentile percentile-medium">32.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">15.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">6.0</span></td>
+
+                    <td class="">54,888
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">32.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">17.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">7.0</span></td>
+
+                    <td>787,803</td>
+                    <td class="">18,258.0</td>
+                </tr>
+                
+                
+            </tbody>
+        </table>
+
+        <div class="key-insights">
+            <h3>Key Insights</h3>
+            <ul>
+                <li>Net = Long Positions - Short Positions. It's positive if more bullish positions are in place than
+                    bearish positions.</li>
+                <li>A unusually small gap between Producer and Money Manager positions may indicate an impending price
+                    increase.</li>
+                <li>Money Managers' positions are often based on substantial research. Consider their positioning in
+                    your analysis.</li>
+                <li>25w, 52w, 3y are percentiles over the desired time frame. Example: 60 means the net position has
+                    been higher in 60% of the cases. We prefer high percentiles for Producer and low percentiles for
+                    money manager.</li>
+            </ul>
+        </div>
+    </div>
+</body>
+
+</html>
