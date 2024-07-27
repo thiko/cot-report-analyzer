@@ -7,6 +7,8 @@ from datetime import datetime, timedelta
 from database.migrate import execute_sql_files
 from disaggregated_fut.disaggregated_fut import load_data_and_generate_report
 from summary_report.generate_summary import generate_output_summary
+from term_structure.scrape_term_structure import \
+    scrape_all_known_term_structures
 
 DATETIME_FOMRAT = "%Y-%m-%d"
 
@@ -47,7 +49,8 @@ def main():
     execute_sql_files('database/resources', db_connection)
 
     try:    
-        load_data_and_generate_report(tmp_output_dir, reports_output_dir, db_connection, target_date)
+        scrape_all_known_term_structures(conn=db_connection)
+        load_data_and_generate_report(tmp_output_dir, reports_output_dir, db_connection, target_date)        
         generate_output_summary(reports_output_dir)
     finally:
         db_connection.close()

@@ -16,21 +16,21 @@ class CommodityData:
             37: ("Palm Oil", "PO", "Soft", lambda row: row['CFTC_Market_Code'].lower() == "cme"),
             39: ("Rough Rice", "ZR", "Grains", lambda row: row['CFTC_Market_Code'].lower() == "cbt"),
             40: ("Orange Juice", "OJ", "Soft", lambda row: row['CFTC_Market_Code'].lower() == "icus"),
-            50: ("Butter", "BT", "Soft", lambda row: row['CFTC_Market_Code'].lower() == "cme"),
-            52: ("Milk", "DA", "Soft", lambda row: row['CFTC_Market_Code'].lower() == "cme" and row['CFTC_Contract_Market_Code'] == "052641"), # MILK, Class III - CHICAGO MERCANTILE EXCHANGE
+            50: ("Butter", "CBQ", "Soft", lambda row: row['CFTC_Market_Code'].lower() == "cme"),
+            52: ("Milk", "DCQ", "Soft", lambda row: row['CFTC_Market_Code'].lower() == "cme" and row['CFTC_Contract_Market_Code'] == "052641"), # MILK, Class III - CHICAGO MERCANTILE EXCHANGE
             54: ("Lean Hogs", "HE", "Meats", lambda row: row['CFTC_Market_Code'].lower() == "cme"),
             57: ("Live Cattle", "LE", "Meats", lambda row: row['CFTC_Market_Code'].lower() == "cme"),
-            58: ("Lumber", "LB", "Soft", lambda row: row['CFTC_Market_Code'].lower() == "cme"),
-            61: ("Feeder Cattle", "GF", "Meats", lambda row: row['CFTC_Market_Code'].lower() == "cme"),
-            63: ("Dry Whey", "DY", "Grains", lambda row: row['CFTC_Market_Code'].lower() == "cbt"),
+            58: ("Lumber", "LBR", "Soft", lambda row: row['CFTC_Market_Code'].lower() == "cme"),
+            61: ("Feeder Cattle", "GFV", "Meats", lambda row: row['CFTC_Market_Code'].lower() == "cme"),
+            63: ("Dry Whey", "DYQ", "Grains", lambda row: row['CFTC_Market_Code'].lower() == "cbt"),
             64: ("Electricity", "EW", "Energy", lambda row: row['CFTC_Market_Code'].lower() == "nyme"),
             66: ("Propane Gas", "PG", "Energy", lambda row: row['CFTC_Market_Code'].lower() == "nyme" and row['Market_and_Exchange_Names'] == "DONT KNOW WHICH ONE"), # weglassen? kennt barchart nicht
             67: ("Crude Oil", "CL", "Energy", lambda row: row['CFTC_Market_Code'].lower() == "nyme" and row['Market_and_Exchange_Names'] == "WTI-PHYSICAL - NEW YORK MERCANTILE EXCHANGE"),
             73: ("Cocoa", "CC", "Soft", lambda row: row['CFTC_Market_Code'].lower() == "icus"),
             75: ("Palladium", "PA", "Metal", lambda row: row['CFTC_Market_Code'].lower() == "nyme"),
             76: ("Platinum", "PL", "Metal", lambda row: row['CFTC_Market_Code'].lower() == "nyme"),
-            80: ("Sugar", "SB", "Soft", lambda row: row['CFTC_Market_Code'].lower() == "icus"),
-            83: ("Coffee", "KC", "Soft", lambda row: row['CFTC_Market_Code'].lower() == "icus"),
+            80: ("Sugar No. 11", "SB", "Soft", lambda row: row['CFTC_Market_Code'].lower() == "icus"),
+            83: ("Coffee C", "KC", "Soft", lambda row: row['CFTC_Market_Code'].lower() == "icus"),
             84: ("Silver", "SI", "Metal", lambda row: row['CFTC_Market_Code'].lower() == "cmx"),
             85: ("Copper", "HG", "Metal", lambda row: row['CFTC_Market_Code'].lower() == "cmx"),
             88: ("Gold", "GC", "Metal", lambda row: row['CFTC_Market_Code'].lower() == "cmx" and row['Market_and_Exchange_Names'] == "GOLD - COMMODITY EXCHANGE INC."), # GOLD - COMMODITY EXCHANGE INC.
@@ -39,7 +39,7 @@ class CommodityData:
             188: ("Cobalt", "CB", "Metal", lambda row: row['CFTC_Market_Code'].lower() == "cmx"),
             189: ("Lithium", "LTH", "Metal", lambda row: row['CFTC_Market_Code'].lower() == "cmx"),
             191: ("Aluminium", "ALI", "Metal", lambda row: row['CFTC_Market_Code'].lower() == "cmx" and row['Market_and_Exchange_Names'] == "ALUMINUM MWP - COMMODITY EXCHANGE INC."),
-            192: ("Steel", "STL", "Metal", lambda row: row['CFTC_Market_Code'].lower() == "cmx" and row['Market_and_Exchange_Names'] == "STEEL-HRC - COMMODITY EXCHANGE INC."),
+            192: ("Steel HRC", "HRC", "Metal", lambda row: row['CFTC_Market_Code'].lower() == "cmx" and row['Market_and_Exchange_Names'] == "STEEL-HRC - COMMODITY EXCHANGE INC."),
             257: ("Steel Scrap", "SSC", "Metal", lambda row: row['CFTC_Market_Code'].lower() == "cmx"), # TODO: Check specific conditions
             864: ("Unknown", "UNK", "Energy", lambda row: row['CFTC_Market_Code'].lower() == "nyme" and row['Market_and_Exchange_Names'] == "PLACEHOLDER"),
             865: ("Fuel Oil Crack", "FOC", "Energy", lambda row: row['CFTC_Market_Code'].lower() == "nyme")

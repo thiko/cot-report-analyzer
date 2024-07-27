@@ -129,6 +129,94 @@
                 padding: 8px;
             }
         }
+
+        .expand-btn {
+            background-color: #003366;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .expand-btn:hover {
+            background-color: #004c99;
+        }
+
+        .expanded-content {
+            background-color: #f0f0f0;
+        }
+
+        .details {
+            padding: 20px;
+        }
+
+        .details h3 {
+            color: #003366;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        .details-content {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .details-left {
+            width: 45%;
+            display: flex;
+            flex-direction: column;
+            padding-right: 20px;
+            /* Added padding to create space */
+        }
+
+        .details-right {
+            margin-top: 20px;
+            /* Added to align vertically with the table */
+        }
+
+        .details-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .term-structure-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .term-structure-table th,
+        .term-structure-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            color: black;
+        }
+
+        .term-structure-table th {
+            background-color: #f2f2f2;
+        }
+
+        .details img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .curve-structure-details {
+            text-align: left;
+            display: inline-block;
+        }
+
+        .curve-structure-details p {
+            margin: 0;
+            padding: 0;
+        }
     </style>
 </head>
 
@@ -140,7 +228,8 @@
         <table>
             <thead>
                 <tr>
-                    <th class="symbol">Symbol</th>
+                    <th></th>
+                    <th colspan="2" class="symbol">Symbol</th>
                     <th colspan="5">Producer/Consumer</th>
                     <th colspan="5">Money Manager</th>
                     <th colspan="4">Gap</th>
@@ -148,6 +237,7 @@
                 </tr>
                 <tr>
 
+                    <th></th>
                     <th></th>
                     <th>Net</th>
                     <th>Change</th>
@@ -170,10 +260,11 @@
             <tbody>
                 {% for group in data %}
                 <tr>
-                    <td colspan="17" class="category">{{ group.category }}</td>
+                    <td colspan="18" class="category">{{ group.category }}</td>
                 </tr>
                 {% for item in group.commodities %}
                 <tr>
+                    <td><button class="expand-btn">+</button></td>
                     <td class="symbol">{{ item.Commodity_Name }} ({{ item.Market_Symbol }})</td>
 
                     <td class="">{{"{:,}".format(item.Producer_Net) }}</td>
@@ -217,6 +308,51 @@
                     <td class="">{{
                         "{:,}".format(item.Change_in_Open_Interest_All) }}</td>
                 </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for {{ item.Commodity_Name }}</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> {{ item.short_term_structure
+                                                }}</p>
+                                            <p><strong>Long term curve structure:</strong> {{ item.long_term_structure
+                                                }}</p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% if item.term_structure_data %}
+                                                {% for month, price in item.term_structure_data[:12] %}
+                                                <tr>
+                                                    <td>{{ month }}</td>
+                                                    <td>{{ price }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                                {% endif %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    {% if item.term_structure_diagram %}
+                                    <img src="data:image/png;base64,{{ item.term_structure_diagram }}"
+                                        alt="{{ item.Commodity_Name }} Term Structure">
+                                    {% else %}
+                                    <p>Term structure diagram not available</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
                 {% endfor %}
                 {% endfor %}
             </tbody>
@@ -237,6 +373,24 @@
             </ul>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const expandButtons = document.querySelectorAll('.expand-btn');
+            expandButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    const row = this.closest('tr');
+                    const expandedContent = row.nextElementSibling;
+                    if (expandedContent.style.display === 'none') {
+                        expandedContent.style.display = 'table-row';
+                        this.textContent = '-';
+                    } else {
+                        expandedContent.style.display = 'none';
+                        this.textContent = '+';
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 
 </html>

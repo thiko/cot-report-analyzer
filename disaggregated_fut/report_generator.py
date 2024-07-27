@@ -7,6 +7,9 @@ import numpy as np
 import pandas as pd
 from jinja2 import Environment, FileSystemLoader
 
+from term_structure.scrape_term_structure import analyze_data_from_db
+from term_structure.term_structure_report import generate_diagram
+
 logger = logging.getLogger(__name__)
 
 # Function to calculate percentiles
@@ -104,12 +107,37 @@ def generate_report(db_connection: sqlite3.Connection, report_output_dir: str, d
     # Calculate percentiles for each commodity
     for index, row in df.iterrows():
         commodity_code = row['CFTC_Commodity_Code']
+        market_symbol = row['Market_Symbol']
+        term_curve_data = analyze_data_from_db(db_connection, market_symbol)
         
         _, df.loc[index, 'Producer_25w'], df.loc[index, 'Producer_52w'], df.loc[index, 'Producer_3yr'] = get_historical_data_and_percentiles(db_connection, commodity_code, 'Producer', latest_date)
         _, df.loc[index, 'Money_Manager_25w'], df.loc[index, 'Money_Manager_52w'], df.loc[index, 'Money_Manager_3yr'] = get_historical_data_and_percentiles(db_connection, commodity_code, 'Money_Manager', latest_date)
         
         _, df.loc[index, 'Total_25w'], df.loc[index, 'Total_52w'], df.loc[index, 'Total_3yr'] = get_historical_data_and_percentiles(db_connection, commodity_code, 'Total', latest_date)
         _, df.loc[index, 'Gap_25w'], df.loc[index, 'Gap_52w'], df.loc[index, 'Gap_3yr'] = get_historical_data_and_percentiles(db_connection, commodity_code, 'Gap', latest_date)
+
+        if term_curve_data:
+                df.loc[index, 'short_term_structure'] = term_curve_data['Short_Term_Structure']
+                df.loc[index, 'long_term_structure'] = term_curve_data['Long_Term_Structure']
+                df.loc[index, 'overall_term_structure'] = term_curve_data['Overall_Term_Structure']
+                # Assuming df is the DataFrame you are working with:
+                if term_curve_data is not None:
+                    # Ensure that 'term_structure_data' column can hold objects
+                    if 'term_structure_data' not in df.columns:
+                        df['term_structure_data'] = pd.Series([None]*len(df), index=df.index, dtype='object')
+                    else:
+                        df['term_structure_data'] = df['term_structure_data'].astype('object')
+
+                    # Assign the value
+                    df.at[index, 'term_structure_data'] = term_curve_data['term_structure_data']
+                else:
+                    df.at[index, 'term_structure_data'] = None
+
+        try:
+            df.loc[index, 'term_structure_diagram'] = generate_diagram(db_connection, market_symbol)
+        except Exception as e:
+            logger.error(f"Failed to generate term structure diagram for {market_symbol}: {str(e)}")
+            df.loc[index, 'term_structure_diagram'] = None
 
     # Group data by category
     grouped_data = df.groupby('Commodity_Category')
