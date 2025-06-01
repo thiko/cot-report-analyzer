@@ -92,7 +92,7 @@ def _insert_into_db(conn, market_symbol, data):
     conn.commit()
 
 def analyze_and_save_data(json_data, conn, market_symbol):
-    if not json_data or 'settlements' not in json_data:
+    if not json_data or 'settlements' not in json_data or len(json_data['settlements']) == 0:
         logger.info("No settlement data found in the response.")
         return
 
