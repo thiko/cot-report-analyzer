@@ -1,0 +1,2569 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoT Disaggregated Report Analyser</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f7f7f7;
+            color: #333;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .container {
+
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        h1,
+        h2 {
+            color: #003366;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 1.8em;
+            margin-top: 30px;
+        }
+
+        p {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 30px;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+        }
+
+        th {
+            background-color: #003366;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        td {
+            text-align: right;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .category {
+            text-align: left;
+            font-weight: bold;
+            background-color: #e6e6e6;
+        }
+
+        .symbol {
+            text-align: left;
+        }
+
+        .percentile {
+            width: 35px;
+            height: 20px;
+            display: inline-block;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            line-height: 20px;
+            border-radius: 3px;
+        }
+
+        .percentile-high {
+            background-color: #006400;
+        }
+
+        .percentile-medium {
+            background-color: #FFA500;
+            color: black;
+        }
+
+        .percentile-low {
+            background-color: #8B0000;
+        }
+
+        .key-insights {
+            background-color: #f0f0f0;
+            padding: 20px;
+            border-radius: 5px;
+        }
+
+        .key-insights h3 {
+            margin-top: 0;
+            color: #003366;
+        }
+
+        @media (max-width: 768px) {
+            table {
+                font-size: 14px;
+            }
+
+            th,
+            td {
+                padding: 8px;
+            }
+        }
+
+        .expand-btn {
+            background-color: #003366;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .expand-btn:hover {
+            background-color: #004c99;
+        }
+
+        .expanded-content {
+            background-color: #f0f0f0;
+        }
+
+        .details {
+            padding: 20px;
+        }
+
+        .details h3 {
+            color: #003366;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        .details-content {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .details-left {
+            width: 45%;
+            display: flex;
+            flex-direction: column;
+            padding-right: 20px;
+            /* Added padding to create space */
+        }
+
+        .details-right {
+            margin-top: 20px;
+            /* Added to align vertically with the table */
+        }
+
+        .details-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .term-structure-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .term-structure-table th,
+        .term-structure-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            color: black;
+        }
+
+        .term-structure-table th {
+            background-color: #f2f2f2;
+        }
+
+        .details img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .curve-structure-details {
+            text-align: left;
+            display: inline-block;
+        }
+
+        .curve-structure-details p {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>CoT Disaggregated Report Analysis</h1>
+        <h2>CoT Commodities</h2>
+        <p>Date: 2026-07-07</p>
+        <table>
+            <thead>
+                <tr>
+                    <th></th>
+                    <th colspan="1" class="symbol">Symbol</th>
+                    <th colspan="5">Producer/Consumer</th>
+                    <th colspan="5">Money Manager</th>
+                    <th colspan="4">Gap</th>
+                    <th colspan="2">Open Interest</th>
+                </tr>
+                <tr>
+
+                    <th></th>
+                    <th></th>
+                    <th>Net</th>
+                    <th>Change</th>
+                    <th>25w</th>
+                    <th>52w</th>
+                    <th>3yr</th>
+                    <th>Net</th>
+                    <th>Change</th>
+                    <th>25w</th>
+                    <th>52w</th>
+                    <th>3yr</th>
+                    <th>Net</th>
+                    <th>25w</th>
+                    <th>52w</th>
+                    <th>3yr</th>
+                    <th>Value</th>
+                    <th>Change</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+                <tr>
+                    <td colspan="18" class="category">Energy</td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Crude Oil (CL)</td>
+
+                    <td class="">390,293</td>
+                    <td class="">19,066</td>
+                    <td><span
+                            class="percentile percentile-high">96.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">98.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">99.0</span></td>
+
+                    <td class="">64,041</td>
+                    <td class="">-15,952</td>
+                    <td><span
+                            class="percentile percentile-high">12.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">50.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">19.0</span></td>
+
+                    <td class="">-326,252
+                    </td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">2.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">1.0</span></td>
+
+                    <td>1,905,761</td>
+                    <td class="">-8,682</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Crude Oil</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Ethanol (EH)</td>
+
+                    <td class="">-4,907</td>
+                    <td class="">-359</td>
+                    <td><span
+                            class="percentile percentile-medium">76.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">67.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">51.0</span></td>
+
+                    <td class="">4,745</td>
+                    <td class="">5,583</td>
+                    <td><span
+                            class="percentile percentile-high">12.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">27.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">46.0</span></td>
+
+                    <td class="">9,652
+                    </td>
+                    <td><span
+                            class="percentile percentile-high">12.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">27.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">45.0</span></td>
+
+                    <td>41,107</td>
+                    <td class="">-7,736</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Ethanol</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Fuel Oil Crack (FOC)</td>
+
+                    <td class="">-588</td>
+                    <td class="">-1,050</td>
+                    <td><span
+                            class="percentile percentile-low">20.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">10.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">13.0</span></td>
+
+                    <td class="">1,205</td>
+                    <td class="">992</td>
+                    <td><span
+                            class="percentile percentile-low">88.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">94.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">98.0</span></td>
+
+                    <td class="">1,793
+                    </td>
+                    <td><span
+                            class="percentile percentile-low">96.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">98.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">94.0</span></td>
+
+                    <td>8,412</td>
+                    <td class="">-2,540</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Fuel Oil Crack</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Gasoline (RB)</td>
+
+                    <td class="">-92,069</td>
+                    <td class="">-2,396</td>
+                    <td><span
+                            class="percentile percentile-medium">28.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">21.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">18.0</span></td>
+
+                    <td class="">71,249</td>
+                    <td class="">-2,354</td>
+                    <td><span
+                            class="percentile percentile-medium">64.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">73.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">84.0</span></td>
+
+                    <td class="">163,318
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">64.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">73.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">83.0</span></td>
+
+                    <td>316,181</td>
+                    <td class="">13,896</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Gasoline</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Natural Gas (NG)</td>
+
+                    <td class="">-38,184</td>
+                    <td class="">-6,684</td>
+                    <td><span
+                            class="percentile percentile-low">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">8.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">53.0</span></td>
+
+                    <td class="">-60,295</td>
+                    <td class="">42,905</td>
+                    <td><span
+                            class="percentile percentile-medium">72.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">50.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">42.0</span></td>
+
+                    <td class="">-22,111
+                    </td>
+                    <td><span
+                            class="percentile percentile-low">96.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">77.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">45.0</span></td>
+
+                    <td>1,669,775</td>
+                    <td class="">35,240</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Natural Gas</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">ULSD NY Harbor (HO)</td>
+
+                    <td class="">-67,055</td>
+                    <td class="">-225</td>
+                    <td><span
+                            class="percentile percentile-medium">56.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">79.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">82.0</span></td>
+
+                    <td class="">4,786</td>
+                    <td class="">-6,948</td>
+                    <td><span
+                            class="percentile percentile-high">4.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">10.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">37.0</span></td>
+
+                    <td class="">71,841
+                    </td>
+                    <td><span
+                            class="percentile percentile-high">4.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">2.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">21.0</span></td>
+
+                    <td>275,975</td>
+                    <td class="">12,815</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for ULSD NY Harbor</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                
+                <tr>
+                    <td colspan="18" class="category">Grains</td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Corn (ZC)</td>
+
+                    <td class="">-395,078</td>
+                    <td class="">-42,037</td>
+                    <td><span
+                            class="percentile percentile-medium">56.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">27.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">21.0</span></td>
+
+                    <td class="">-14,999</td>
+                    <td class="">-24,832</td>
+                    <td><span
+                            class="percentile percentile-medium">32.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">56.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">67.0</span></td>
+
+                    <td class="">380,079
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">36.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">69.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">74.0</span></td>
+
+                    <td>1,711,613</td>
+                    <td class="">-20,425</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Corn</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Rough Rice (ZR)</td>
+
+                    <td class="">-2,431</td>
+                    <td class="">-627</td>
+                    <td><span
+                            class="percentile percentile-low">4.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">2.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">29.0</span></td>
+
+                    <td class="">-487</td>
+                    <td class="">-103</td>
+                    <td><span
+                            class="percentile percentile-medium">80.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">90.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">64.0</span></td>
+
+                    <td class="">1,944
+                    </td>
+                    <td><span
+                            class="percentile percentile-low">84.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">92.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">67.0</span></td>
+
+                    <td>12,708</td>
+                    <td class="">-936</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Rough Rice</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Soybean Meal (ZM)</td>
+
+                    <td class="">-197,084</td>
+                    <td class="">-16,246</td>
+                    <td><span
+                            class="percentile percentile-medium">56.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">27.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">23.0</span></td>
+
+                    <td class="">18,722</td>
+                    <td class="">-5,444</td>
+                    <td><span
+                            class="percentile percentile-medium">28.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">58.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">55.0</span></td>
+
+                    <td class="">215,806
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">36.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">65.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">65.0</span></td>
+
+                    <td>595,447</td>
+                    <td class="">6,928</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Soybean Meal</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Soybean Oil (ZL)</td>
+
+                    <td class="">-182,246</td>
+                    <td class="">8,009</td>
+                    <td><span
+                            class="percentile percentile-medium">68.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">37.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">17.0</span></td>
+
+                    <td class="">84,919</td>
+                    <td class="">-6,764</td>
+                    <td><span
+                            class="percentile percentile-medium">28.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">65.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">88.0</span></td>
+
+                    <td class="">267,165
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">28.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">65.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">88.0</span></td>
+
+                    <td>642,514</td>
+                    <td class="">12,479</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Soybean Oil</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Soybeans (ZS)</td>
+
+                    <td class="">-211,751</td>
+                    <td class="">-37,424</td>
+                    <td><span
+                            class="percentile percentile-medium">76.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">58.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">19.0</span></td>
+
+                    <td class="">69,579</td>
+                    <td class="">-61,317</td>
+                    <td><span
+                            class="percentile percentile-medium">24.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">44.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">74.0</span></td>
+
+                    <td class="">281,330
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">24.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">42.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">80.0</span></td>
+
+                    <td>1,001,375</td>
+                    <td class="">79,291</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Soybeans</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Wheat (ZW)</td>
+
+                    <td class="">-12,829</td>
+                    <td class="">-6,333</td>
+                    <td><span
+                            class="percentile percentile-medium">72.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">38.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">45.0</span></td>
+
+                    <td class="">-60,432</td>
+                    <td class="">384</td>
+                    <td><span
+                            class="percentile percentile-medium">36.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">58.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">67.0</span></td>
+
+                    <td class="">-47,603
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">32.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">62.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">63.0</span></td>
+
+                    <td>412,570</td>
+                    <td class="">5,847</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Wheat</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                
+                <tr>
+                    <td colspan="18" class="category">Meats</td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Feeder Cattle (GFV)</td>
+
+                    <td class="">-5,325</td>
+                    <td class="">-365</td>
+                    <td><span
+                            class="percentile percentile-medium">68.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">83.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">46.0</span></td>
+
+                    <td class="">14,566</td>
+                    <td class="">-1,501</td>
+                    <td><span
+                            class="percentile percentile-high">16.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">13.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">47.0</span></td>
+
+                    <td class="">19,891
+                    </td>
+                    <td><span
+                            class="percentile percentile-high">16.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">10.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">49.0</span></td>
+
+                    <td>64,535</td>
+                    <td class="">-593</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Feeder Cattle</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Lean Hogs (HE)</td>
+
+                    <td class="">-9,177</td>
+                    <td class="">3,351</td>
+                    <td><span
+                            class="percentile percentile-high">96.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">98.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">99.0</span></td>
+
+                    <td class="">-40,390</td>
+                    <td class="">7,306</td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+
+                    <td class="">-31,213
+                    </td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+
+                    <td>296,501</td>
+                    <td class="">2,649</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Lean Hogs</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Live Cattle (LE)</td>
+
+                    <td class="">-129,405</td>
+                    <td class="">5,444</td>
+                    <td><span
+                            class="percentile percentile-medium">76.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">58.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">39.0</span></td>
+
+                    <td class="">114,908</td>
+                    <td class="">-99</td>
+                    <td><span
+                            class="percentile percentile-medium">36.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">42.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">62.0</span></td>
+
+                    <td class="">244,313
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">32.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">40.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">61.0</span></td>
+
+                    <td>316,893</td>
+                    <td class="">-2,679</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Live Cattle</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                
+                <tr>
+                    <td colspan="18" class="category">Metal</td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Aluminium (ALI)</td>
+
+                    <td class="">-11,121</td>
+                    <td class="">-1,617</td>
+                    <td><span
+                            class="percentile percentile-low">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">2.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">35.0</span></td>
+
+                    <td class="">-439</td>
+                    <td class="">-784</td>
+                    <td><span
+                            class="percentile percentile-high">4.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">19.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">60.0</span></td>
+
+                    <td class="">10,682
+                    </td>
+                    <td><span
+                            class="percentile percentile-low">96.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">98.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">77.0</span></td>
+
+                    <td>28,878</td>
+                    <td class="">-1,566</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Aluminium</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Cobalt (CB)</td>
+
+                    <td class="">-1,645</td>
+                    <td class="">179</td>
+                    <td><span
+                            class="percentile percentile-high">96.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">75.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">72.0</span></td>
+
+                    <td class="">-1,179</td>
+                    <td class="">155</td>
+                    <td><span
+                            class="percentile percentile-high">4.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">27.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">9.0</span></td>
+
+                    <td class="">466
+                    </td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">25.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">12.0</span></td>
+
+                    <td>14,254</td>
+                    <td class="">-613</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Cobalt</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Copper (HG)</td>
+
+                    <td class="">-90,983</td>
+                    <td class="">-1,645</td>
+                    <td><span
+                            class="percentile percentile-medium">56.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">31.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">12.0</span></td>
+
+                    <td class="">58,784</td>
+                    <td class="">402</td>
+                    <td><span
+                            class="percentile percentile-medium">48.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">54.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">81.0</span></td>
+
+                    <td class="">149,767
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">48.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">65.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">86.0</span></td>
+
+                    <td>250,948</td>
+                    <td class="">-3,387</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Copper</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Gold (GC)</td>
+
+                    <td class="">-20,986</td>
+                    <td class="">-3,940</td>
+                    <td><span
+                            class="percentile percentile-low">20.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">62.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">85.0</span></td>
+
+                    <td class="">116,161</td>
+                    <td class="">-2,697</td>
+                    <td><span
+                            class="percentile percentile-low">84.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">54.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">43.0</span></td>
+
+                    <td class="">137,147
+                    </td>
+                    <td><span
+                            class="percentile percentile-low">88.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">42.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">31.0</span></td>
+
+                    <td>371,776</td>
+                    <td class="">2,235</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Gold</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Lithium (LTH)</td>
+
+                    <td class="">-3,500</td>
+                    <td class="">296</td>
+                    <td><span
+                            class="percentile percentile-medium">28.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">65.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">53.0</span></td>
+
+                    <td class="">1,727</td>
+                    <td class="">870</td>
+                    <td><span
+                            class="percentile percentile-low">88.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">42.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">44.0</span></td>
+
+                    <td class="">5,227
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">76.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">37.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">48.0</span></td>
+
+                    <td>14,298</td>
+                    <td class="">-2,091</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Lithium</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Palladium (PA)</td>
+
+                    <td class="">509</td>
+                    <td class="">122</td>
+                    <td><span
+                            class="percentile percentile-high">96.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">98.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">57.0</span></td>
+
+                    <td class="">-6,381</td>
+                    <td class="">-543</td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">4.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">61.0</span></td>
+
+                    <td class="">-6,890
+                    </td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">56.0</span></td>
+
+                    <td>17,854</td>
+                    <td class="">7</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Palladium</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Platinum (PL)</td>
+
+                    <td class="">-9,239</td>
+                    <td class="">496</td>
+                    <td><span
+                            class="percentile percentile-high">96.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">98.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">99.0</span></td>
+
+                    <td class="">7,585</td>
+                    <td class="">-904</td>
+                    <td><span
+                            class="percentile percentile-medium">28.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">17.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">49.0</span></td>
+
+                    <td class="">16,824
+                    </td>
+                    <td><span
+                            class="percentile percentile-high">16.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">8.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">17.0</span></td>
+
+                    <td>53,645</td>
+                    <td class="">-74</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Platinum</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Silver (SI)</td>
+
+                    <td class="">-13,356</td>
+                    <td class="">-1,085</td>
+                    <td><span
+                            class="percentile percentile-high">92.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">96.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">99.0</span></td>
+
+                    <td class="">13,201</td>
+                    <td class="">-1,101</td>
+                    <td><span
+                            class="percentile percentile-low">88.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">42.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">29.0</span></td>
+
+                    <td class="">26,557
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">48.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">23.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">10.0</span></td>
+
+                    <td>104,859</td>
+                    <td class="">-4,105</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Silver</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Steel HRC (HRC)</td>
+
+                    <td class="">-20,308</td>
+                    <td class="">-51</td>
+                    <td><span
+                            class="percentile percentile-high">92.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">48.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">16.0</span></td>
+
+                    <td class="">7,366</td>
+                    <td class="">-602</td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">42.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">75.0</span></td>
+
+                    <td class="">27,674
+                    </td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">44.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">81.0</span></td>
+
+                    <td>40,020</td>
+                    <td class="">879</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Steel HRC</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                
+                <tr>
+                    <td colspan="18" class="category">Soft</td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Butter (CBQ)</td>
+
+                    <td class="">437</td>
+                    <td class="">-118</td>
+                    <td><span
+                            class="percentile percentile-medium">52.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">62.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">42.0</span></td>
+
+                    <td class="">-315</td>
+                    <td class="">1,037</td>
+                    <td><span
+                            class="percentile percentile-high">8.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">4.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">10.0</span></td>
+
+                    <td class="">-752
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">36.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">27.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">51.0</span></td>
+
+                    <td>16,510</td>
+                    <td class="">-2,223</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Butter</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Cocoa (CC)</td>
+
+                    <td class="">-23,525</td>
+                    <td class="">-1,713</td>
+                    <td><span
+                            class="percentile percentile-low">16.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">12.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">60.0</span></td>
+
+                    <td class="">-5,864</td>
+                    <td class="">-4,052</td>
+                    <td><span
+                            class="percentile percentile-low">92.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">54.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">18.0</span></td>
+
+                    <td class="">17,661
+                    </td>
+                    <td><span
+                            class="percentile percentile-low">96.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">67.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">22.0</span></td>
+
+                    <td>197,971</td>
+                    <td class="">11,490</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Cocoa</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Coffee C (KC)</td>
+
+                    <td class="">-29,294</td>
+                    <td class="">-4,891</td>
+                    <td><span
+                            class="percentile percentile-low">20.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">44.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">65.0</span></td>
+
+                    <td class="">34,454</td>
+                    <td class="">1,961</td>
+                    <td><span
+                            class="percentile percentile-low">88.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">62.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">37.0</span></td>
+
+                    <td class="">63,748
+                    </td>
+                    <td><span
+                            class="percentile percentile-low">88.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">62.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">37.0</span></td>
+
+                    <td>174,440</td>
+                    <td class="">-9,288</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Coffee C</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Cotton (CT)</td>
+
+                    <td class="">-126,462</td>
+                    <td class="">-10,196</td>
+                    <td><span
+                            class="percentile percentile-medium">28.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">13.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">8.0</span></td>
+
+                    <td class="">34,354</td>
+                    <td class="">-8,303</td>
+                    <td><span
+                            class="percentile percentile-medium">64.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">83.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">83.0</span></td>
+
+                    <td class="">160,816
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">72.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">87.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">90.0</span></td>
+
+                    <td>318,052</td>
+                    <td class="">12,344</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Cotton</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Lumber (LBR)</td>
+
+                    <td class="">-751</td>
+                    <td class="">-171</td>
+                    <td><span
+                            class="percentile percentile-low">4.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">12.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">30.0</span></td>
+
+                    <td class="">-383</td>
+                    <td class="">-26</td>
+                    <td><span
+                            class="percentile percentile-low">88.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">85.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">72.0</span></td>
+
+                    <td class="">368
+                    </td>
+                    <td><span
+                            class="percentile percentile-low">92.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">87.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">72.0</span></td>
+
+                    <td>6,632</td>
+                    <td class="">-121</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Lumber</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Milk (DCQ)</td>
+
+                    <td class="">1,174</td>
+                    <td class="">-1,100</td>
+                    <td><span
+                            class="percentile percentile-medium">68.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">54.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">30.0</span></td>
+
+                    <td class="">-6,200</td>
+                    <td class="">1,122</td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">0.0</span></td>
+
+                    <td class="">-7,374
+                    </td>
+                    <td><span
+                            class="percentile percentile-high">20.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">13.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">24.0</span></td>
+
+                    <td>31,523</td>
+                    <td class="">-2,752</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Milk</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Orange Juice (OJ)</td>
+
+                    <td class="">-1,997</td>
+                    <td class="">-819</td>
+                    <td><span
+                            class="percentile percentile-medium">56.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">48.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">79.0</span></td>
+
+                    <td class="">141</td>
+                    <td class="">-529</td>
+                    <td><span
+                            class="percentile percentile-medium">40.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">46.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">17.0</span></td>
+
+                    <td class="">2,138
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">40.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">46.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">17.0</span></td>
+
+                    <td>8,725</td>
+                    <td class="">132</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Orange Juice</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Palm Oil (PO)</td>
+
+                    <td class="">7,898</td>
+                    <td class="">-711</td>
+                    <td><span
+                            class="percentile percentile-medium">76.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">88.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">51.0</span></td>
+
+                    <td class="">-3,375</td>
+                    <td class="">3,863</td>
+                    <td><span
+                            class="percentile percentile-high">8.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">4.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">1.0</span></td>
+
+                    <td class="">-11,273
+                    </td>
+                    <td><span
+                            class="percentile percentile-high">16.0</span></td>
+                    <td><span
+                            class="percentile percentile-high">8.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">44.0</span></td>
+
+                    <td>49,519</td>
+                    <td class="">-5,004</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Palm Oil</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <td><button class="expand-btn">+</button></td>
+                    <td class="symbol">Sugar No. 11 (SB)</td>
+
+                    <td class="">-130,997</td>
+                    <td class="">-18,794</td>
+                    <td><span
+                            class="percentile percentile-low">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">0.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">20.0</span></td>
+
+                    <td class="">-108,650</td>
+                    <td class="">14,913</td>
+                    <td><span
+                            class="percentile percentile-medium">72.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">71.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">24.0</span></td>
+
+                    <td class="">22,347
+                    </td>
+                    <td><span
+                            class="percentile percentile-medium">76.0</span></td>
+                    <td><span
+                            class="percentile percentile-low">88.0</span></td>
+                    <td><span
+                            class="percentile percentile-medium">41.0</span></td>
+
+                    <td>997,547</td>
+                    <td class="">5,207</td>
+                </tr>
+                <tr class="expanded-content" style="display: none;">
+                    <td colspan="18">
+                        <div class="details">
+                            <h3 style="text-align: left;">Additional Details for Sugar No. 11</h3>
+                            <div class="details-content">
+                                <div class="details-left">
+                                    <div class="details-wrapper"> <!-- New Wrapper Div -->
+                                        <div class="curve-structure-details">
+                                            <p><strong>Short term curve structure:</strong> </p>
+                                            <p><strong>Long term curve structure:</strong> </p>
+                                        </div>
+                                        <table class="term-structure-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="details-right">
+                                    
+                                    <p>Term structure diagram not available</p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                
+                
+            </tbody>
+        </table>
+
+        <div class="key-insights">
+            <h3>Key Insights</h3>
+            <ul>
+                <li>Net = Long Positions - Short Positions. It's positive if more bullish positions are in place than
+                    bearish positions.</li>
+                <li>A unusually small gap between Producer and Money Manager positions may indicate an impending price
+                    increase.</li>
+                <li>Money Managers' positions are often based on substantial research. Consider their positioning in
+                    your analysis.</li>
+                <li>25w, 52w, 3y are percentiles over the desired time frame. Example: 60 means the net position has
+                    been higher in 60% of the cases. We prefer high percentiles for Producer and low percentiles for
+                    money manager.</li>
+            </ul>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const expandButtons = document.querySelectorAll('.expand-btn');
+            expandButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    const row = this.closest('tr');
+                    const expandedContent = row.nextElementSibling;
+                    if (expandedContent.style.display === 'none') {
+                        expandedContent.style.display = 'table-row';
+                        this.textContent = '-';
+                    } else {
+                        expandedContent.style.display = 'none';
+                        this.textContent = '+';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
