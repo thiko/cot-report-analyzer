@@ -229,7 +229,18 @@ a { color: var(--accent); }
   font-weight: 600;
 }
 
-select, input[type="search"], button.btn {
+select, input[type="search"], button.btn--select {
+  appearance: none;
+  cursor: pointer;
+  padding-right: 22px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+                    linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+  background-position: calc(100% - 13px) 50%, calc(100% - 9px) 50%;
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+}
+
+.btn {
   font: inherit;
   color: var(--text-primary);
   background: var(--surface-2);

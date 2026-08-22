@@ -38,6 +38,12 @@ class ReportSpec:
     label: str
     short_label: str
     description: str
+    # German rendering of the same sentence. The site can switch languages, and
+    # the descriptions belong next to the reports they describe rather than in a
+    # second dictionary in the client that nobody remembers to update. Trader
+    # group and report labels stay untranslated on purpose: they are the CFTC's
+    # own terms and German market commentary uses them in English.
+    description_de: str
     archive_prefix: str
     member: str
     date_col: str
@@ -181,6 +187,8 @@ REPORTS: dict[str, ReportSpec] = {
             short_label="Disaggregated",
             description="Commodity positions split into producers, swap dealers, "
                         "managed money and other reportables. Futures only.",
+            description_de="Rohstoffpositionen aufgeteilt nach Produzenten, Swap Dealern, "
+                           "Managed Money und sonstigen meldepflichtigen Händlern. Nur Futures.",
             archive_prefix="fut_disagg_txt_",
             member="f_year.txt",
             date_col="Report_Date_as_YYYY_MM_DD",
@@ -194,6 +202,8 @@ REPORTS: dict[str, ReportSpec] = {
             short_label="Disaggregated F&O",
             description="Same breakdown as the futures-only disaggregated report, "
                         "but including options positions on a delta-adjusted basis.",
+            description_de="Dieselbe Aufteilung wie der reine Futures-Report, jedoch "
+                           "inklusive Optionspositionen auf Delta-Basis.",
             archive_prefix="com_disagg_txt_",
             member="c_year.txt",
             date_col="Report_Date_as_YYYY_MM_DD",
@@ -207,6 +217,8 @@ REPORTS: dict[str, ReportSpec] = {
             short_label="Legacy",
             description="The classic COT split into commercial, non-commercial and "
                         "non-reportable traders. Futures only.",
+            description_de="Die klassische COT-Aufteilung in kommerzielle, nicht-kommerzielle "
+                           "und nicht meldepflichtige Händler. Nur Futures.",
             archive_prefix="deacot",
             member="annual.txt",
             date_col="As_of_Date_in_Form_YYYY_MM_DD",
@@ -220,6 +232,8 @@ REPORTS: dict[str, ReportSpec] = {
             short_label="Financials",
             description="Rates, currencies, equity indices and crypto split into "
                         "dealers, asset managers and leveraged funds. Futures only.",
+            description_de="Zinsen, Währungen, Aktienindizes und Krypto aufgeteilt nach "
+                           "Dealern, Asset Managern und Leveraged Funds. Nur Futures.",
             archive_prefix="fut_fin_txt_",
             member="FinFutYY.txt",
             date_col="Report_Date_as_YYYY_MM_DD",
@@ -233,6 +247,8 @@ REPORTS: dict[str, ReportSpec] = {
             short_label="Supplemental",
             description="Thirteen agricultural markets with commodity index traders "
                         "broken out separately. Futures and options.",
+            description_de="Dreizehn Agrarmärkte, in denen Rohstoffindex-Händler separat "
+                           "ausgewiesen werden. Futures und Optionen.",
             archive_prefix="dea_cit_txt_",
             member="annualci.txt",
             date_col="As_of_Date_In_Form_YYYY_MM_DD",

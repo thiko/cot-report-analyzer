@@ -19,6 +19,8 @@ async function resolveDataRoot() {
   }
 }
 
+import { DEFAULT_LANGUAGE, LANGUAGES, LANGUAGE_NAMES, STRINGS } from "./i18n.js";
+
 const SERIES_COLORS = [
   "var(--series-1)", "var(--series-2)", "var(--series-3)",
   "var(--series-4)", "var(--series-5)", "var(--series-6)",
@@ -34,35 +36,10 @@ const DEFAULT_GROUPS = {
   supplemental_futopt: ["commercial", "noncommercial", "index_trader"],
 };
 
-const GROUP_GLOSSARY = {
-  producer: "Physical hedgers — they own or need the commodity and sell into strength.",
-  swap: "Swap dealers hedging over-the-counter exposure, largely index-related flow.",
-  managed_money: "CTAs and hedge funds. Trend followers, and the crowd that gets squeezed.",
-  other_reportable: "Large traders that fit no other bucket.",
-  nonreportable: "Everyone below the reporting threshold — small speculators.",
-  commercial: "Hedgers with a business in the underlying market.",
-  noncommercial: "Large speculators without a commercial hedging need.",
-  index_trader: "Commodity index funds tracking a long-only benchmark.",
-  dealer: "Sell-side intermediaries. Their book is the mirror of client flow.",
-  asset_manager: "Pensions, insurers and mutual funds holding long-term exposure.",
-  leveraged_money: "Hedge funds and levered accounts — the fast money in financials.",
-  gap: "Speculators minus hedgers. Extremes flag crowded, one-sided positioning.",
-};
 
-const RANGES = [
-  { key: 25, label: "25w" },
-  { key: 52, label: "52w" },
-  { key: 156, label: "3y" },
-  { key: 0, label: "Max" },
-];
+const RANGES = [25, 52, 156, 0];
 
-const COMPARE_OFFSETS = [
-  { weeks: 1, label: "Previous week" },
-  { weeks: 4, label: "4 weeks ago" },
-  { weeks: 13, label: "13 weeks ago" },
-  { weeks: 26, label: "26 weeks ago" },
-  { weeks: 52, label: "52 weeks ago" },
-];
+const COMPARE_OFFSETS = [1, 4, 13, 26, 52];
 
 // Percentile thresholds that count as an extreme. The strong pair drives the
 // deeper wash, the plain pair both the lighter wash and the signal engine.
@@ -71,9 +48,25 @@ const EXTREME_HIGH = 90;
 const EXTREME_LOW = 10;
 const EXTREME_STRONG_LOW = 5;
 
-const numberFmt = new Intl.NumberFormat("en-US");
-const signedFmt = new Intl.NumberFormat("en-US", { signDisplay: "always" });
-const pctFmt = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
+// Rebuilt whenever the language changes: German groups thousands with a dot and
+// separates decimals with a comma, so the formatters cannot be constants.
+let numberFmt = new Intl.NumberFormat("en-US");
+let signedFmt = new Intl.NumberFormat("en-US", { signDisplay: "always" });
+let pctFmt = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
+
+/* Look up an interface string in the active language. Values are either plain
+ * strings or functions of the interpolated parts — see site/i18n.js. Falls back
+ * to English rather than rendering a raw key. */
+function t(key, params) {
+  const table = STRINGS[state.lang] || STRINGS[DEFAULT_LANGUAGE];
+  const value = key in table ? table[key] : STRINGS[DEFAULT_LANGUAGE][key];
+  if (value === undefined) return key;
+  return typeof value === "function" ? value(params) : value;
+}
+
+function compareOptionLabel(weeks) {
+  return weeks === 1 ? t("toolbar.previousWeek") : t("toolbar.weeksAgo", { n: weeks });
+}
 
 /* ------------------------------------------------------------------ state */
 
@@ -88,6 +81,7 @@ const state = {
   measure: "net",
   sort: null,          // { column, direction } — null keeps the category grouping
   expanded: null,      // symbol
+  lang: DEFAULT_LANGUAGE,
   shortlistOpen: true,
   shortlistDate: null, // date the cross-report scan currently holds data for
   detailRange: 52,
@@ -331,15 +325,13 @@ function marketSignal(meta, idx, marketIdx, source = store()) {
   };
 }
 
-const SIGNAL_LABEL = { 2: "Reversal", 1: "Turning" };
+const SIGNAL_LABEL = { 2: "signal.reversal", 1: "signal.turning" };
 
 function signalBadge(signal) {
   const badge = document.createElement("span");
   badge.className = `signal signal--${signal.level} signal--${signal.side > 0 ? "long" : "short"}`;
-  badge.textContent = SIGNAL_LABEL[signal.level];
-  badge.title = signal.level === 2
-    ? "Speculators at a 52-week extreme, the weekly flow running against it, and hedgers at the mirror extreme."
-    : "Speculators at a 52-week extreme with the weekly flow running against it.";
+  badge.textContent = t(SIGNAL_LABEL[signal.level]);
+  badge.title = t(signal.level === 2 ? "signal.titleReversal" : "signal.titleTurning");
   return badge;
 }
 
@@ -354,48 +346,47 @@ function situationMarkup(market, marketIdx, idx, meta) {
   const signal = marketSignal(meta, idx, marketIdx);
 
   if (!signal) {
-    paras.push(`No speculator/hedger pair is defined for this report, so there is
-      nothing to summarise beyond the columns themselves.`);
+    paras.push(t("summary.noPair"));
   } else {
-    const dir = signal.net === null ? null : (signal.net >= 0 ? "long" : "short");
-    const size = signal.net === null ? "—" : numberFmt.format(Math.abs(signal.net));
-    const share = signal.pctOi === null ? "" :
-      `, ${pctFmt.format(Math.abs(signal.pctOi))}% of open interest`;
+    const direction = signal.net === null ? t("summary.flat")
+      : t(signal.net >= 0 ? "summary.long" : "summary.short");
+    paras.push(t("summary.position", {
+      group: esc(signal.spec.label),
+      direction,
+      size: signal.net === null ? "—" : numberFmt.format(Math.abs(signal.net)),
+      share: signal.pctOi === null ? ""
+        : t("summary.shareOfOi", { pct: pctFmt.format(Math.abs(signal.pctOi)) }),
+    }));
 
-    paras.push(`<b>${esc(signal.spec.label)}</b> is net <b>${dir ?? "flat"} ${size}</b>
-      contracts${share}.`);
-
-    const windows = [
-      signal.p25 === null ? null : `${ordinal(signal.p25)} over 25 weeks`,
-      signal.p156 === null ? null : `${ordinal(signal.p156)} over three years`,
-    ].filter(Boolean).join(", ");
-
-    const reading = signal.side > 0 ? "this crowd has rarely been more long"
-      : (signal.side < 0 ? "this crowd has rarely been more short"
-                         : "mid-range, nothing stretched");
-    paras.push(`That is the <b>${ordinal(signal.specPct)} percentile</b> of the last
-      52 weeks${windows ? ` (${windows})` : ""} — ${reading}. In the percentile columns
-      blue marks the net-long end of a market's own range and red the net-short end;
-      only the top and bottom decile get any wash.`);
+    const reading = t(signal.side > 0 ? "summary.readingLong"
+      : (signal.side < 0 ? "summary.readingShort" : "summary.readingMid"));
+    paras.push(t("summary.percentile", {
+      pct: ordinal(signal.specPct),
+      windows: t("summary.windows", {
+        p25: signal.p25 === null ? null : ordinal(signal.p25),
+        p156: signal.p156 === null ? null : ordinal(signal.p156),
+      }),
+      reading,
+    }));
 
     // Said as a rise or fall of the net figure, never as "added" or "cut": on a
     // net-short book a falling number means the short grew, and the plain verb
     // reads as the opposite.
     if (signal.chg !== null && signal.chg !== 0) {
-      const verb = signal.chg > 0 ? "rose" : "fell";
-      const against = signal.turning
-        ? " — movement against the extreme, which is what the badge tracks"
-        : (signal.side !== 0 ? " — still pushing the extreme further" : "");
-      paras.push(`This week the net figure <b>${verb} ${numberFmt.format(Math.abs(signal.chg))}</b>
-        contracts${against}.`);
+      paras.push(t("summary.change", {
+        verb: t(signal.chg > 0 ? "summary.rose" : "summary.fell"),
+        size: numberFmt.format(Math.abs(signal.chg)),
+        against: signal.turning ? t("summary.againstExtreme")
+          : (signal.side !== 0 ? t("summary.pushingFurther") : ""),
+      }));
     }
 
     if (signal.commPct !== null) {
-      const mirrorNote = signal.mirror
-        ? ", the mirror image — both sides of the market sit at their limit"
-        : "";
-      paras.push(`<b>${esc(signal.comm.label)}</b> holds the
-        <b>${ordinal(signal.commPct)} percentile</b>${mirrorNote}.`);
+      paras.push(t("summary.hedger", {
+        group: esc(signal.comm.label),
+        pct: ordinal(signal.commPct),
+        mirror: signal.mirror ? t("summary.mirrorNote") : "",
+      }));
     }
 
     paras.push(verdictHtml(signal));
@@ -406,30 +397,21 @@ function situationMarkup(market, marketIdx, idx, meta) {
 }
 
 function verdictHtml(signal) {
+  const verdict = (className, label, rest) =>
+    `<span class="verdict ${className}">${t(label)}</span>${t(rest)}`;
+
   if (signal.level === 2) {
-    return `<span class="verdict verdict--strong">Reversal setup</span> — crowded,
-      turning, and confirmed by the hedgers. Historically the strongest of the three
-      buckets, and it still only unwound about six times in ten.`;
+    return verdict("verdict--strong", "verdict.reversalLabel", "verdict.reversal");
   }
   if (signal.level === 1) {
-    return `<span class="verdict">Turning</span> — crowded with the flow going the other
-      way, but the hedgers are not at the matching extreme, so the weaker of the two
-      flags.`;
+    return verdict("", "verdict.turningLabel", "verdict.turning");
   }
-  if (signal.side !== 0) {
-    return `<span class="verdict verdict--muted">No flag</span> — positioning is extreme
-      but still building in the same direction. On its own an extreme says little; it
-      persists for a median of three weeks and has run as long as 94.`;
-  }
-  return `<span class="verdict verdict--muted">No flag</span> — positioning is nowhere
-    near an extreme this week.`;
+  return verdict("verdict--muted", "verdict.noneLabel",
+                 signal.side !== 0 ? "verdict.building" : "verdict.quiet");
 }
 
 function ordinal(value) {
-  const n = Math.round(value);
-  const tens = n % 100;
-  if (tens >= 11 && tens <= 13) return `${n}th`;
-  return `${n}${["th", "st", "nd", "rd"][n % 10] || "th"}`;
+  return t("meta.ordinal", Math.round(value));
 }
 
 function esc(text) {
@@ -466,11 +448,7 @@ const SHORTLIST_CONCENTRATED = 15;
 const SHORTLIST_OI_LOOKBACK = 4;
 const TIER_ORDER = { A: 0, B: 1, C: 2 };
 
-const TIER_NOTE = {
-  A: "Crowded, turning, hedgers at the mirror, and open interest rising — fresh money arriving as the extreme breaks.",
-  B: "Crowded, turning, hedgers at the mirror, but open interest is flat or falling.",
-  C: "Crowded and turning, without the hedgers at the matching extreme.",
-};
+
 
 // One entry per contract, not per report: the same CFTC market code appears in
 // up to three report types, and three of them flagging it at once is a sturdier
@@ -555,7 +533,7 @@ function renderShortlist() {
   toggle.onclick = () => { state.shortlistOpen = !state.shortlistOpen; renderShortlist(); };
 
   if (state.shortlistDate !== state.date) {
-    count.textContent = "scanning…";
+    count.textContent = t("shortlist.scanning");
     body.replaceChildren();
     note.textContent = "";
     return;
@@ -563,18 +541,20 @@ function renderShortlist() {
 
   const { rows, excluded } = shortlistCandidates(state.date);
   count.textContent = rows.length
-    ? `${rows.length} market${rows.length === 1 ? "" : "s"}`
-    : "nothing flagged";
+    ? t("shortlist.count", { n: rows.length })
+    : t("shortlist.nothing");
 
   note.textContent = excluded.length
-    ? `Held back as too thin to read — under ${numberFmt.format(SHORTLIST_MIN_OI)} contracts of open interest: `
-      + excluded.map((m) => `${m.name} (${m.symbol})`).join(", ") + "."
+    ? t("shortlist.excluded", {
+        min: numberFmt.format(SHORTLIST_MIN_OI),
+        list: excluded.map((m) => `${m.name} (${m.symbol})`).join(", "),
+      })
     : "";
 
   if (!rows.length) {
     body.replaceChildren(Object.assign(document.createElement("p"), {
       className: "shortlist__empty",
-      textContent: "No market is at a positioning extreme with the weekly flow turning against it this week.",
+      textContent: t("shortlist.empty"),
     }));
     return;
   }
@@ -595,7 +575,7 @@ function shortlistCard(row) {
   const tier = document.createElement("span");
   tier.className = `card__tier card__tier--${row.tier}`;
   tier.textContent = row.tier;
-  tier.title = TIER_NOTE[row.tier];
+  tier.title = t(`tier.${row.tier}`);
   const name = document.createElement("span");
   name.className = "card__name";
   name.textContent = row.name;
@@ -608,9 +588,7 @@ function shortlistCard(row) {
   // measured. It is not a read on price: no price series enters this build.
   const pressure = document.createElement("p");
   pressure.className = `card__pressure card__pressure--${row.side > 0 ? "long" : "short"}`;
-  pressure.textContent = row.side > 0
-    ? "Speculators crowded long — an unwind means them selling"
-    : "Speculators crowded short — an unwind means them buying";
+  pressure.textContent = t(row.side > 0 ? "card.pressureLong" : "card.pressureShort");
 
   const facts = document.createElement("dl");
   facts.className = "card__facts";
@@ -622,11 +600,11 @@ function shortlistCard(row) {
     if (className) dd.className = className;
     facts.append(dt, dd);
   };
-  fact(`${row.signal.spec.label} 52w`, `${ordinal(row.signal.specPct)}`);
-  fact(`${row.signal.comm.label} 52w`,
+  fact(t("card.window52", { label: row.signal.spec.label }), ordinal(row.signal.specPct));
+  fact(t("card.window52", { label: row.signal.comm.label }),
        row.signal.commPct === null ? "—" : ordinal(row.signal.commPct));
-  fact("Open interest", `${compact(row.oi)}${row.oiRising ? " ↑" : ""}`);
-  fact("Share of OI", row.pctOi === null ? "—" : `${pctFmt.format(Math.abs(row.pctOi))}%`,
+  fact(t("card.openInterest"), `${compact(row.oi)}${row.oiRising ? " ↑" : ""}`);
+  fact(t("card.shareOfOi"), row.pctOi === null ? "—" : `${pctFmt.format(Math.abs(row.pctOi))}%`,
        row.pctOi !== null && Math.abs(row.pctOi) >= SHORTLIST_CONCENTRATED ? "warn" : "");
 
   const chips = document.createElement("div");
@@ -646,8 +624,8 @@ function shortlistCard(row) {
   if (row.pctOi !== null && Math.abs(row.pctOi) >= SHORTLIST_CONCENTRATED) {
     const warn = document.createElement("p");
     warn.className = "card__warn";
-    warn.textContent = `Position is ${pctFmt.format(Math.abs(row.pctOi))}% of open interest.`
-      + " Historically the heavily concentrated ones unwound more slowly, not faster.";
+    warn.textContent = t("card.concentrated",
+                         { pct: pctFmt.format(Math.abs(row.pctOi)) });
     card.append(warn);
   }
 
@@ -683,9 +661,12 @@ function renderTabs() {
 
 function renderDescription() {
   const meta = reportMeta(state.report);
-  el("report-description").textContent = meta.description;
+  // The German descriptions ride along in index.json next to the English ones;
+  // an older data file that predates them falls back rather than going blank.
+  el("report-description").textContent =
+    (state.lang === "de" && meta.description_de) || meta.description;
   el("build-meta").textContent = state.index.latest_date
-    ? `data through ${state.index.latest_date}`
+    ? t("app.dataThrough", { date: state.index.latest_date })
     : "";
 }
 
@@ -702,15 +683,17 @@ function renderControls() {
     render();
   };
 
-  const compareOptions = [{ value: "", label: "— none —" }];
-  COMPARE_OFFSETS.forEach((o) => compareOptions.push({ value: `offset:${o.weeks}`, label: o.label }));
+  const compareOptions = [{ value: "", label: t("toolbar.compareNone") }];
+  COMPARE_OFFSETS.forEach((weeks) => compareOptions.push({
+    value: `offset:${weeks}`, label: compareOptionLabel(weeks),
+  }));
   dates.filter((d) => d < state.date)
     .slice(0, 260)
     .forEach((d) => compareOptions.push({ value: d, label: d }));
   fillSelect(el("compare-select"), compareOptions, state.compare);
   el("compare-select").onchange = (event) => { state.compare = event.target.value; render(); };
 
-  const categories = [{ value: "", label: "All categories" }]
+  const categories = [{ value: "", label: t("toolbar.allCategories") }]
     .concat(meta.categories.map((c) => ({ value: c, label: c })));
   fillSelect(el("category-select"), categories, state.category);
   el("category-select").onchange = (event) => { state.category = event.target.value; render(); };
@@ -736,9 +719,7 @@ function renderControls() {
 
   const note = el("term-structure-note");
   const curves = state.termStructure && Object.keys(state.termStructure.curves || {}).length;
-  note.textContent = curves
-    ? "Term structure curves come from CME settlement data stored alongside the positions."
-    : "Term structure curves are unavailable — CME Group blocks automated access to its settlement endpoint.";
+  note.textContent = t(curves ? "notes.curvesAvailable" : "notes.curvesMissing");
 }
 
 function fillSelect(select, options, value) {
@@ -810,12 +791,12 @@ function renderTable() {
 
   const metrics = ["net", "chg", ...(showDelta ? ["delta"] : []), "p25w", "p52w", "p156w"];
   const metricLabels = {
-    net: state.measure === "pct_oi" ? "% OI" : "Net",
-    chg: "Δ week",
-    delta: "Δ vs cmp",
-    p25w: "25w",
-    p52w: "52w",
-    p156w: "3y",
+    net: t(state.measure === "pct_oi" ? "table.pctOi" : "table.net"),
+    chg: t("table.deltaWeek"),
+    delta: t("table.deltaCompare"),
+    p25w: t("table.w25"),
+    p52w: t("table.w52"),
+    p156w: t("table.y3"),
   };
 
   renderHead(groups, metrics, metricLabels);
@@ -827,7 +808,7 @@ function renderTable() {
   if (idx < 0 || !rows.length) {
     body.replaceChildren();
     status.hidden = false;
-    status.textContent = idx < 0 ? "Loading…" : "No markets match these filters.";
+    status.textContent = t(idx < 0 ? "table.loading" : "table.noMatch");
     return;
   }
   status.hidden = true;
@@ -855,15 +836,15 @@ function renderHead(groups, metrics, metricLabels) {
   const head = el("table-head");
   const top = document.createElement("tr");
   top.append(th("", { className: "col-market" }));
-  top.append(th("Open Interest", { colSpan: 2, className: "group-head" }));
+  top.append(th(t("table.openInterest"), { colSpan: 2, className: "group-head" }));
   groups.forEach((group) => {
     top.append(th(group.label, { colSpan: metrics.length, className: "group-head" }));
   });
 
   const bottom = document.createElement("tr");
-  bottom.append(th("Market", { className: "col-market" }));
-  bottom.append(sortableTh("Total", "oi"));
-  bottom.append(sortableTh("Δ week", "oi_chg"));
+  bottom.append(th(t("table.market"), { className: "col-market" }));
+  bottom.append(sortableTh(t("table.total"), "oi"));
+  bottom.append(sortableTh(t("table.deltaWeek"), "oi_chg"));
   groups.forEach((group) => {
     metrics.forEach((metric, position) => {
       const cellEl = sortableTh(metricLabels[metric], `${group.key}|${metric}`);
@@ -925,7 +906,7 @@ function marketRow(market, marketIdx, idx, cmp, groups, metrics, meta) {
   toggle.type = "button";
   toggle.textContent = state.expanded === market.symbol ? "▾" : "▸";
   toggle.setAttribute("aria-expanded", String(state.expanded === market.symbol));
-  toggle.setAttribute("aria-label", `Details for ${market.name}`);
+  toggle.setAttribute("aria-label", t("detail.detailsFor", { name: market.name }));
   toggle.onclick = () => {
     state.expanded = state.expanded === market.symbol ? null : market.symbol;
     renderTable();
@@ -993,7 +974,7 @@ function infoButton(market, marketIdx, idx, meta) {
   button.className = "info";
   button.type = "button";
   button.textContent = "\u24d8";
-  button.setAttribute("aria-label", `What the numbers say about ${market.name}`);
+  button.setAttribute("aria-label", t("detail.infoFor", { name: market.name }));
   attachTooltip(button, () => situationMarkup(market, marketIdx, idx, meta), { pin: true });
   return button;
 }
@@ -1029,16 +1010,16 @@ function historyPanel(market, marketIdx, meta) {
   head.className = "panel__head";
   const title = document.createElement("h3");
   title.className = "panel__title";
-  title.textContent = `${market.name} — net position history`;
+  title.textContent = t("detail.netHistory", { name: market.name });
   const ranges = document.createElement("div");
   ranges.className = "range-buttons chips";
   RANGES.forEach((range) => {
     const button = document.createElement("button");
     button.className = "chip";
     button.type = "button";
-    button.textContent = range.label;
-    button.setAttribute("aria-pressed", String(state.detailRange === range.key));
-    button.onclick = () => { state.detailRange = range.key; renderTable(); };
+    button.textContent = t(`range.${range}`);
+    button.setAttribute("aria-pressed", String(state.detailRange === range));
+    button.onclick = () => { state.detailRange = range; renderTable(); };
     ranges.append(button);
   });
   head.append(title, ranges);
@@ -1075,7 +1056,7 @@ function sidePanel(market, marketIdx, idx, meta) {
   head.className = "panel__head";
   const title = document.createElement("h3");
   title.className = "panel__title";
-  title.textContent = "Long / short split";
+  title.textContent = t("detail.longShortSplit");
   const note = document.createElement("span");
   note.className = "panel__note";
   note.textContent = state.date;
@@ -1098,14 +1079,14 @@ function sidePanel(market, marketIdx, idx, meta) {
   curveHead.className = "panel__head";
   const curveTitle = document.createElement("h3");
   curveTitle.className = "panel__title";
-  curveTitle.textContent = "Term structure";
+  curveTitle.textContent = t("detail.termStructure");
   const curveNote = document.createElement("span");
   curveNote.className = "panel__note";
-  curveNote.textContent = curve ? `${curve.overall ?? ""} · ${curve.report_date}` : "no data";
+  curveNote.textContent = curve ? `${curve.overall ?? ""} · ${curve.report_date}`
+                                : t("detail.noData");
   curveHead.append(curveTitle, curveNote);
   curvePanel.append(curveHead);
-  curvePanel.append(curve ? curveChart(curve) : emptyNote(
-    "No settlement curve stored for this market."));
+  curvePanel.append(curve ? curveChart(curve) : emptyNote(t("detail.noCurve")));
   wrap.append(curvePanel);
 
   return wrap;
@@ -1128,9 +1109,9 @@ function splitBar(label, long, short, spread) {
   const track = document.createElement("div");
   track.className = "bar-track";
 
-  [["Long", long, "var(--pos-400)"],
-   ["Short", short, "var(--neg-400)"],
-   ["Spread", spread, "var(--surface-3)"]].forEach(([key, value, color]) => {
+  [[t("detail.long"), long, "var(--pos-400)"],
+   [t("detail.short"), short, "var(--neg-400)"],
+   [t("detail.spread"), spread, "var(--surface-3)"]].forEach(([key, value, color]) => {
     if (!value) return;
     const seg = document.createElement("div");
     seg.className = "bar-seg";
@@ -1339,7 +1320,7 @@ function curveChart(curve) {
       class: "series-end", cx: x(i), cy: y(price), r: 3, fill: "var(--series-1)",
     });
     attachTooltip(dot, () => `<div class="tooltip__date">${month.slice(0, 7)}</div>
-      <div class="tooltip__row"><span class="tooltip__key">Settlement</span>
+      <div class="tooltip__row"><span class="tooltip__key">${t("detail.settlement")}</span>
       <span class="tooltip__value">${pctFmt.format(price)}</span></div>`);
     svg.append(dot);
   });
@@ -1424,9 +1405,62 @@ function renderGlossary() {
     const name = document.createElement("strong");
     name.textContent = `${group.label}: `;
     item.append(name, document.createTextNode(
-      GROUP_GLOSSARY[group.key] || group.formula || ""));
+      t(`glossary.${group.key}`) === `glossary.${group.key}`
+        ? (group.formula || "")
+        : t(`glossary.${group.key}`)));
     return item;
   }));
+}
+
+/* ------------------------------------------------------------- language */
+
+/* Text that lives in index.html rather than being generated. Marked up with
+ * data-i18n on the element, so adding a string to the page means adding one
+ * attribute rather than another line in a render function. */
+function renderStatic() {
+  document.querySelectorAll("[data-i18n]").forEach((node) => {
+    node.textContent = t(node.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-html]").forEach((node) => {
+    node.innerHTML = t(node.dataset.i18nHtml);
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((node) => {
+    node.placeholder = t(node.dataset.i18nPlaceholder);
+  });
+  document.querySelectorAll("[data-i18n-aria]").forEach((node) => {
+    node.setAttribute("aria-label", t(node.dataset.i18nAria));
+  });
+}
+
+function applyLanguage(lang) {
+  state.lang = LANGUAGES.includes(lang) ? lang : DEFAULT_LANGUAGE;
+  const locale = t("meta.locale");
+  numberFmt = new Intl.NumberFormat(locale);
+  signedFmt = new Intl.NumberFormat(locale, { signDisplay: "always" });
+  pctFmt = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
+  document.documentElement.lang = state.lang;
+  renderStatic();
+}
+
+function initLanguage() {
+  let stored = null;
+  try { stored = localStorage.getItem("cot-lang"); } catch { /* private mode */ }
+  const guess = (navigator.language || "").slice(0, 2).toLowerCase();
+  applyLanguage(stored || (LANGUAGES.includes(guess) ? guess : DEFAULT_LANGUAGE));
+
+  const select = el("language-select");
+  select.replaceChildren(...LANGUAGES.map((lang) => {
+    const option = document.createElement("option");
+    option.value = lang;
+    option.textContent = LANGUAGE_NAMES[lang];
+    option.selected = lang === state.lang;
+    return option;
+  }));
+  select.onchange = (event) => {
+    applyLanguage(event.target.value);
+    try { localStorage.setItem("cot-lang", state.lang); } catch { /* ignore */ }
+    if (state.index) render();
+  };
 }
 
 /* ------------------------------------------------------------ url + theme */
@@ -1488,6 +1522,7 @@ async function selectReport(key, options = {}) {
 
 async function boot() {
   initTheme();
+  initLanguage();
   document.addEventListener("click", () => { if (tooltipPinned) unpinTooltip(); });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && tooltipPinned) unpinTooltip();

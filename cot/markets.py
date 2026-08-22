@@ -8,6 +8,9 @@ basis swaps, power hubs) out of the report by construction.
 
 `cme_key` is the CME Group settlements API product id used to pull the term
 structure. None means no term structure is available for that market.
+
+Price tickers are derived rather than stored per market: see
+PRICE_SYMBOL_OVERRIDES below.
 """
 
 from dataclasses import dataclass
@@ -129,6 +132,48 @@ def category_rank(category: str) -> int:
         return CATEGORY_ORDER.index(category)
     except ValueError:
         return len(CATEGORY_ORDER)
+
+
+# On the price feed a continuous futures ticker is the COT symbol with an "=F"
+# suffix, which holds for 53 of the 70 markets. Only the exceptions are listed
+# here: an explicit ticker where the pattern breaks, or None where no comparable
+# series exists at all.
+#
+# The None entries are deliberate rather than pending. ETF proxies do exist for
+# the MSCI pair and the commodity index, but an ETF tracks something different
+# enough from the contract — fees, currency hedging, its own roll schedule —
+# that a return computed off it would not be the contract's return, and a
+# quietly substituted series is worse than an absent one.
+PRICE_SYMBOL_OVERRIDES: dict[str, str | None] = {
+    "SPX": "^GSPC",       # consolidated S&P contract, quoted against the index
+    "NDX": "^NDX",
+    "VX": "^VIX",
+    "DX": "DX-Y.NYB",     # the ICE index itself, not a futures chain
+    "MW": None,           # Minneapolis spring wheat
+    "RS": None,           # canola
+    "PO": None,           # palm oil
+    "CBQ": None,          # butter
+    "DCQ": None,          # class III milk
+    "EH": None,           # ethanol
+    "FOC": None,          # Gulf #6 fuel oil crack
+    "SR3": None,          # SOFR futures
+    "SR1": None,
+    "MME": None,          # MSCI emerging markets
+    "MFS": None,          # MSCI EAFE
+    "AW": None,           # Bloomberg commodity index
+    "LTH": None,          # lithium hydroxide — ticker resolves, history does not
+}
+
+
+def price_targets() -> dict[str, str]:
+    """Market symbol -> price feed ticker, for every market that has one."""
+    targets = {}
+    for universe in UNIVERSES.values():
+        for market in universe.values():
+            ticker = PRICE_SYMBOL_OVERRIDES.get(market.symbol, f"{market.symbol}=F")
+            if ticker:
+                targets[market.symbol] = ticker
+    return targets
 
 
 def term_structure_targets() -> dict[str, str]:

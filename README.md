@@ -6,6 +6,11 @@ history kept in the repository.
 
 **Site:** GitHub Pages (Settings → Pages → Source: *GitHub Actions*)
 
+The interface is available in English and German — the picker sits next to the
+theme button. Market names, trader group labels and report names stay in English
+in both: they are the CFTC's own terms, and German market commentary uses them
+untranslated.
+
 ## What it produces
 
 | Tab | CFTC report | Trader groups |
@@ -89,9 +94,10 @@ cot/
   store.py         SQLite ingest into one generic table shape per report
   metrics.py       net, weekly change, rolling percentiles, gap
   export.py        columnar JSON for the site
+  prices.py        daily settlement prices (best effort, see below)
   termstructure.py CME settlement curves (see the caveat below)
   pipeline.py      orchestration
-site/              static client: index.html, app.js, styles.css
+site/              static client: index.html, app.js, styles.css, i18n.js
 data/              committed output — this is the history
 ```
 
@@ -106,10 +112,36 @@ python -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python main.py                 # build every report into data/
 .venv/bin/python main.py -r legacy_fut   # one report type only
 .venv/bin/python main.py --no-download   # re-export from the existing database
+.venv/bin/python main.py --no-prices     # skip the price feed
 python -m http.server 8000               # then open http://localhost:8000/site/
 ```
 
-## Term structure is currently unavailable
+## Prices
+
+`cot/prices.py` pulls daily closes for 57 of the 70 markets and stores them
+alongside the positions, so a positioning signal can eventually be scored
+against what the market did rather than only against how the position unwound.
+Tickers are derived from the COT symbol — `CL` becomes `CL=F` — with the
+exceptions listed in `PRICE_SYMBOL_OVERRIDES`.
+
+The thirteen markets without a price carry `None` there rather than an ETF
+stand-in. An ETF tracks something different enough from the contract (fees,
+currency hedging, its own roll schedule) that a return computed off it would not
+be the contract's return, and a quietly substituted series is worse than an
+absent one.
+
+The stage is best effort by construction and cannot fail a build. Every fetch is
+wrapped, a symbol that errors is logged and skipped, rate limits are waited out
+with backoff and then given up on, and `_update_prices` catches whatever is left.
+Keeping the committed COT history current is what the weekly run exists for; a
+price feed that is throttled or has changed shape must not be able to take that
+with it. `--no-prices` skips the stage entirely.
+
+Stooq was the first choice and is not usable: it now answers automated requests
+with a JavaScript proof-of-work challenge, which is bot detection rather than a
+rate limit and is not something to work around.
+
+## Term structure is unavailable
 
 CME Group blocks automated access to its settlements endpoint and answers with
 HTTP 403 and a scraping notice. The scraper is still in the tree but is off by

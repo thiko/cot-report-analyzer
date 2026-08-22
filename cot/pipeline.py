@@ -5,9 +5,10 @@ from datetime import date
 
 from cot.config import Config
 from cot.download import fetch_year
-from cot.export import (report_index_entry, write_index, write_report_years,
-                        write_term_structure)
+from cot.export import (report_index_entry, write_index, write_prices,
+                        write_report_years, write_term_structure)
 from cot.metrics import enrich
+from cot.prices import update_all as update_prices, weekly_closes
 from cot.reports import REPORTS, ReportSpec
 from cot.store import connect, ensure_table, ingest_file, read_report
 from cot.termstructure import latest_curves, scrape_all
@@ -16,13 +17,15 @@ logger = logging.getLogger(__name__)
 
 
 def run(config: Config, report_keys: list[str] | None = None,
-        with_term_structure: bool = False, download: bool = True,
-        today: date | None = None) -> None:
+        with_term_structure: bool = False, with_prices: bool = True,
+        download: bool = True, today: date | None = None) -> None:
     """Build every configured report.
 
     Term structure is off by default: CME Group blocks automated access to its
     settlement endpoint and returns HTTP 403 with a scraping notice, so the
     scrape only runs when explicitly asked for.
+
+    Prices are on by default but never fatal — see _update_prices.
     """
     today = today or date.today()
     specs = [REPORTS[key] for key in (report_keys or REPORTS)]
@@ -36,18 +39,41 @@ def run(config: Config, report_keys: list[str] | None = None,
 
         if with_term_structure:
             scrape_all(conn)
+        if with_prices:
+            _update_prices(conn, config, today)
 
         entries = []
+        report_dates: set[str] = set()
         for spec in specs:
             frame = read_report(conn, spec)
             frame = enrich(frame, spec)
             years = write_report_years(frame, spec, config.data_dir)
-            entries.append(report_index_entry(spec, frame, years))
+            entry = report_index_entry(spec, frame, years)
+            report_dates.update(entry["dates"])
+            entries.append(entry)
 
+        dates = sorted(report_dates)
+        write_prices(weekly_closes(conn, dates), dates, config.data_dir)
         write_term_structure(latest_curves(conn), config.data_dir)
         write_index(entries, config.data_dir)
     finally:
         conn.close()
+
+
+def _update_prices(conn, config: Config, today: date) -> None:
+    """Refresh the price series, swallowing anything that goes wrong.
+
+    The committed COT history is what this build exists to keep current. Prices
+    are an enrichment on top of it, so a feed that is down, throttled or has
+    changed shape gets logged and left behind rather than allowed to abort the
+    run and skip the week.
+    """
+    start = date(today.year - config.history_years + 1, 1, 1)
+    try:
+        updated = update_prices(conn, start, today)
+        logger.info("Price series updated for %d markets", updated)
+    except Exception:  # noqa: BLE001 - deliberately total
+        logger.exception("Price update failed; continuing without fresh prices")
 
 
 def _load_years(conn, spec: ReportSpec, config: Config, today: date) -> None:

@@ -95,6 +95,16 @@ def _matrix(frame: pd.DataFrame, column: str, dates: list[str],
     return [[convert(value) for value in row] for row in pivot.to_numpy()]
 
 
+def write_prices(closes: dict[str, list], dates: list[str], data_dir: Path) -> None:
+    """Close per market as of every report date, in the same columnar shape as
+    the report files: one date list, one row of closes per market."""
+    _write_json(data_dir / "prices.json", {
+        "schema": SCHEMA_VERSION,
+        "dates": dates,
+        "closes": closes,
+    })
+
+
 def write_term_structure(curves: dict, data_dir: Path) -> None:
     _write_json(data_dir / "term_structure.json",
                 {"schema": SCHEMA_VERSION, "curves": curves})
@@ -120,6 +130,7 @@ def report_index_entry(spec: ReportSpec, frame: pd.DataFrame, years: list[int]) 
         "label": spec.label,
         "short_label": spec.short_label,
         "description": spec.description,
+        "description_de": spec.description_de,
         "universe": spec.universe,
         "groups": metric_groups(spec),
         "windows": list(WINDOWS),

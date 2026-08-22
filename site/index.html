@@ -14,7 +14,10 @@
     <h1 class="masthead__title">COT Report Analyser</h1>
     <span class="masthead__meta" id="build-meta"></span>
     <span class="masthead__spacer"></span>
-    <button class="btn" id="theme-toggle" type="button" aria-label="Switch colour theme">Theme</button>
+    <label class="visually-hidden" for="language-select" data-i18n="app.languageAria">Interface language</label>
+    <select class="btn btn--select" id="language-select" data-i18n-aria="app.languageAria"></select>
+    <button class="btn" id="theme-toggle" type="button"
+            data-i18n="app.theme" data-i18n-aria="app.themeAria">Theme</button>
   </div>
   <nav class="tabs" id="report-tabs" role="tablist" aria-label="COT report type"></nav>
 </header>
@@ -24,30 +27,33 @@
 
   <section class="toolbar" aria-label="Filters">
     <div class="field">
-      <label class="field__label" for="date-select">Report date</label>
+      <label class="field__label" for="date-select" data-i18n="toolbar.reportDate">Report date</label>
       <select id="date-select"></select>
     </div>
     <div class="field">
-      <label class="field__label" for="compare-select">Compare with</label>
+      <label class="field__label" for="compare-select" data-i18n="toolbar.compareWith">Compare with</label>
       <select id="compare-select"></select>
     </div>
     <div class="field">
-      <label class="field__label" for="category-select">Category</label>
+      <label class="field__label" for="category-select" data-i18n="toolbar.category">Category</label>
       <select id="category-select"></select>
     </div>
     <div class="field">
-      <label class="field__label" for="search-input">Search</label>
-      <input type="search" id="search-input" placeholder="Corn, GC, …" autocomplete="off">
+      <label class="field__label" for="search-input" data-i18n="toolbar.search">Search</label>
+      <input type="search" id="search-input" placeholder="Corn, GC, …" autocomplete="off"
+             data-i18n-placeholder="toolbar.searchPlaceholder">
     </div>
     <div class="field">
-      <span class="field__label" id="groups-label">Trader groups</span>
+      <span class="field__label" id="groups-label" data-i18n="toolbar.traderGroups">Trader groups</span>
       <div class="chips" id="group-chips" role="group" aria-labelledby="groups-label"></div>
     </div>
     <div class="field">
-      <span class="field__label" id="measure-label">Net shown as</span>
+      <span class="field__label" id="measure-label" data-i18n="toolbar.netShownAs">Net shown as</span>
       <div class="chips" id="measure-chips" role="group" aria-labelledby="measure-label">
-        <button class="chip" type="button" data-measure="net" aria-pressed="true">Contracts</button>
-        <button class="chip" type="button" data-measure="pct_oi" aria-pressed="false">% of OI</button>
+        <button class="chip" type="button" data-measure="net" aria-pressed="true"
+                data-i18n="toolbar.contracts">Contracts</button>
+        <button class="chip" type="button" data-measure="pct_oi" aria-pressed="false"
+                data-i18n="toolbar.pctOi">% of OI</button>
       </div>
     </div>
   </section>
@@ -57,12 +63,10 @@
       <button class="shortlist__toggle" id="shortlist-toggle" type="button"
               aria-expanded="true" aria-controls="shortlist-body">
         <span class="shortlist__caret" aria-hidden="true"></span>
-        <h2 class="shortlist__title" id="shortlist-title">Worth a closer look</h2>
+        <h2 class="shortlist__title" id="shortlist-title" data-i18n="shortlist.title">Worth a closer look</h2>
       </button>
       <span class="shortlist__count" id="shortlist-count"></span>
-      <span class="shortlist__blurb">Every report type scanned for this week: positioning at a
-        52-week extreme with the weekly flow turning against it, ranked. A shortlist for research,
-        not a signal — no price series enters this build, so nothing here is a read on direction.</span>
+      <span class="shortlist__blurb" data-i18n="shortlist.blurb"></span>
     </div>
     <div class="shortlist__body" id="shortlist-body"></div>
     <p class="shortlist__note" id="shortlist-note"></p>
@@ -70,7 +74,7 @@
 
   <div class="table-wrap">
     <table class="cot" id="cot-table">
-      <caption class="visually-hidden">Net positioning by market and trader group</caption>
+      <caption class="visually-hidden" data-i18n="table.caption">Net positioning by market and trader group</caption>
       <thead id="table-head"></thead>
       <tbody id="table-body"></tbody>
     </table>
@@ -79,33 +83,33 @@
 
   <section class="notes">
     <div class="panel">
-      <h2 class="panel__title">Reading the table</h2>
+      <h2 class="panel__title" data-i18n="notes.readingTitle"></h2>
       <ul>
-        <li><strong>Net</strong> is long minus short positions for that trader group. Positive means net long.</li>
-        <li><strong>Δ week</strong> is the change the CFTC reports against the prior week.</li>
-        <li><strong>25w / 52w / 3y</strong> are percentile ranks of the current net position within that trailing window. 90 means the position has been more long than this in only 10% of the weeks.</li>
-        <li>Blue marks the net-long end of a market's own range, red the net-short end. Only the top and bottom decile are shaded, deeper past the 95th and 5th; everything between stays plain. The number always carries the value, colour only repeats it.</li>
-        <li>The <strong>&#x24d8;</strong> on each row spells the current week out in words — what the position is, how stretched, which way it moved and whether anything is flagged. Hover it, or click to pin it open.</li>
+        <li data-i18n-html="notes.reading1"></li>
+        <li data-i18n-html="notes.reading2"></li>
+        <li data-i18n-html="notes.reading3"></li>
+        <li data-i18n-html="notes.reading4"></li>
+        <li data-i18n-html="notes.reading5"></li>
       </ul>
     </div>
     <div class="panel">
-      <h2 class="panel__title">The two flags</h2>
+      <h2 class="panel__title" data-i18n="notes.flagsTitle"></h2>
       <ul>
-        <li><strong>Reversal</strong> — speculators sit in the top or bottom decile of their 52-week range, the weekly change runs <em>against</em> that extreme, and hedgers hold the mirror extreme on the other side. Roughly 5% of market-weeks.</li>
-        <li><strong>Turning</strong> — the same extreme and the same counter-flow, but without the hedger confirmation. Roughly 9% of market-weeks.</li>
-        <li>Measured over the committed 2022&ndash;2026 history, eight weeks forward, in units of each market's own 52-week deviation: an extreme percentile on its own unwound 59% of the time, adding the turn 61%, adding the hedger mirror 62%. Useful as a shortlist, not as a trigger.</li>
-        <li>An extreme percentile alone is <em>not</em> flagged. It occurs in nearly 40% of market-weeks and persists for a median of three, because a trending position sits at the edge of its own window by construction.</li>
+        <li data-i18n-html="notes.flags1"></li>
+        <li data-i18n-html="notes.flags2"></li>
+        <li data-i18n-html="notes.flags3"></li>
+        <li data-i18n-html="notes.flags4"></li>
       </ul>
     </div>
     <div class="panel">
-      <h2 class="panel__title">Who is who</h2>
+      <h2 class="panel__title" data-i18n="notes.whoTitle"></h2>
       <ul id="group-glossary"></ul>
     </div>
     <div class="panel">
-      <h2 class="panel__title">Source</h2>
+      <h2 class="panel__title" data-i18n="notes.sourceTitle"></h2>
       <ul>
-        <li>CFTC Commitments of Traders, published Fridays at 15:30 ET for the preceding Tuesday.</li>
-        <li>Every report type is rebuilt weekly and committed to the repository, so any past week stays reachable through the date picker.</li>
+        <li data-i18n="notes.source1"></li>
+        <li data-i18n="notes.source2"></li>
         <li id="term-structure-note"></li>
       </ul>
     </div>

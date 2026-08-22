@@ -3,16 +3,21 @@
 import json
 import sqlite3
 import textwrap
+from datetime import date
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
+import requests
 
 from cot.download import normalize_column
 from cot.export import report_index_entry, write_index, write_report_years
-from cot.markets import COMMODITY_MARKETS, FINANCIAL_MARKETS
+from cot.markets import (COMMODITY_MARKETS, FINANCIAL_MARKETS,
+                         PRICE_SYMBOL_OVERRIDES, price_targets)
 from cot.metrics import _rolling_percentile, enrich
+from cot.prices import _as_of, parse_series, update_all, weekly_closes
+from cot.prices import ensure_table as ensure_prices_table
 from cot.reports import REPORTS
 from cot.store import ensure_table, ingest_file, read_report
 
@@ -116,3 +121,76 @@ def test_export_round_trip(built, tmp_path):
     index = json.loads((tmp_path / "data" / "index.json").read_text())
     assert index["latest_date"] == "2026-01-13"
     assert index["reports"][0]["key"] == spec.key
+
+
+def test_every_report_carries_a_german_description():
+    """The site can switch languages; a missing translation would render blank."""
+    for spec in REPORTS.values():
+        assert spec.description_de.strip()
+        assert spec.description_de != spec.description
+
+
+def test_price_targets_are_unique_and_non_empty():
+    targets = price_targets()
+    assert targets, "no market maps to a price ticker"
+    assert all(ticker for ticker in targets.values())
+    assert len(set(targets.values())) == len(targets)
+    # Markets explicitly marked as having no comparable series stay out.
+    for symbol, ticker in PRICE_SYMBOL_OVERRIDES.items():
+        if ticker is None:
+            assert symbol not in targets
+
+
+def test_parse_series_uses_the_exchange_offset_and_skips_gaps():
+    # 2026-01-05 23:00 UTC, which is 2026-01-06 at a +7200s exchange.
+    payload = {"chart": {"result": [{
+        "timestamp": [1767654000, 1767740400, 1767826800],
+        "meta": {"gmtoffset": 7200},
+        "indicators": {"quote": [{"close": [10.0, None, 12.5]}]},
+    }]}}
+    points = parse_series(payload)
+    assert [p[1] for p in points] == [10.0, 12.5]
+    assert points[0][0] == date(2026, 1, 6)
+
+
+@pytest.mark.parametrize("payload", [
+    {}, {"chart": {}}, {"chart": {"result": []}},
+    {"chart": {"result": [{"timestamp": [], "indicators": {}}]}},
+])
+def test_parse_series_survives_a_reshaped_response(payload):
+    assert parse_series(payload) == []
+
+
+def test_as_of_carries_a_close_forward_but_not_indefinitely():
+    points = [("2026-01-05", 10.0), ("2026-01-06", 11.0), ("2026-01-20", 12.0)]
+    dates = ["2026-01-05", "2026-01-07", "2026-01-13", "2026-01-19", "2026-01-20", "2026-02-10"]
+    # A holiday takes the previous close; a series that stopped goes empty
+    # rather than drawing a flat line where there is no data.
+    assert _as_of(points, dates) == [10.0, 11.0, 11.0, None, 12.0, None]
+
+
+def test_weekly_closes_ignores_a_series_that_is_too_short(tmp_path):
+    conn = sqlite3.connect(tmp_path / "p.db")
+    ensure_prices_table(conn)
+    conn.executemany("INSERT INTO prices (symbol, trade_date, close) VALUES (?, ?, ?)",
+                     [("THIN", f"2026-01-{d:02d}", 1.0) for d in range(1, 6)])
+    conn.commit()
+    assert "THIN" not in weekly_closes(conn, ["2026-01-05"])
+
+
+def test_update_all_never_raises_when_the_feed_is_broken(tmp_path, monkeypatch):
+    """The weekly build's job is the COT history. A price feed that is down,
+    throttled or returning nonsense must not be able to take that with it."""
+    conn = sqlite3.connect(tmp_path / "p.db")
+
+    for failure in (requests.RequestException("connection reset"),
+                    ValueError("not json"),
+                    RuntimeError("something else entirely")):
+        def explode(*args, _exc=failure, **kwargs):
+            raise _exc
+        monkeypatch.setattr("cot.prices.fetch_series", explode)
+        assert update_all(conn, date(2026, 1, 1), date(2026, 1, 8),
+                          polite_delay=False) == 0
+
+    monkeypatch.setattr("cot.prices.fetch_series", lambda *a, **k: [])
+    assert update_all(conn, date(2026, 1, 1), date(2026, 1, 8), polite_delay=False) == 0
