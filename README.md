@@ -137,6 +137,20 @@ Keeping the committed COT history current is what the weekly run exists for; a
 price feed that is throttled or has changed shape must not be able to take that
 with it. `--no-prices` skips the stage entirely.
 
+**The feed does not answer the weekly runner.** GitHub's shared address ranges
+get HTTP 429 on every request, not as a burst limit but as a standing refusal,
+and the retry ladder turned that into half an hour of waiting for nothing. So
+the workflow runs with `--no-prices`, and a circuit breaker abandons the stage
+after three consecutive transport failures wherever it runs. Prices are
+refreshed separately from a host the feed does answer:
+
+```bash
+.venv/bin/python main.py --prices-only   # then commit data/prices.json
+```
+
+A symbol the feed answers but has no data for is a delisted contract, not a
+wall, and does not count against the breaker.
+
 Stooq was the first choice and is not usable: it now answers automated requests
 with a JavaScript proof-of-work challenge, which is bot detection rather than a
 rate limit and is not something to work around.

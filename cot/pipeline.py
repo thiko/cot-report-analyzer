@@ -1,5 +1,6 @@
 """Orchestration: download → store → derive metrics → export JSON."""
 
+import json
 import logging
 from datetime import date
 
@@ -56,6 +57,32 @@ def run(config: Config, report_keys: list[str] | None = None,
         write_prices(weekly_closes(conn, dates), dates, config.data_dir)
         write_term_structure(latest_curves(conn), config.data_dir)
         write_index(entries, config.data_dir)
+    finally:
+        conn.close()
+
+
+def run_prices_only(config: Config, today: date | None = None) -> None:
+    """Refresh prices and rewrite prices.json, leaving the COT data untouched.
+
+    Split out because the feed refuses shared CI address ranges outright, which
+    makes the weekly runner the one place the price stage cannot work. This
+    lets it run from a host that the feed does answer, against report dates the
+    committed index already knows, and the result is committed like any other
+    generated file.
+    """
+    today = today or date.today()
+    index_path = config.data_dir / "index.json"
+    if not index_path.exists():
+        logger.error("%s is missing — build the reports before fetching prices",
+                     index_path)
+        return
+
+    dates = sorted({d for entry in json.loads(index_path.read_text())["reports"]
+                    for d in entry.get("dates", [])})
+    conn = connect(config.database)
+    try:
+        _update_prices(conn, config, today)
+        write_prices(weekly_closes(conn, dates), dates, config.data_dir)
     finally:
         conn.close()
 

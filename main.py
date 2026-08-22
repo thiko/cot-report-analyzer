@@ -6,7 +6,7 @@ import logging
 import sys
 
 from cot.config import Config
-from cot.pipeline import run
+from cot.pipeline import run, run_prices_only
 from cot.reports import REPORTS
 
 
@@ -18,6 +18,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--term-structure", action="store_true",
                         help="also scrape CME settlements for term structure curves "
                              "(CME blocks automated access, so this usually fails)")
+    parser.add_argument("--prices-only", action="store_true",
+                        help="only refresh the price feed and rewrite prices.json, "
+                             "leaving the COT data alone (the feed refuses shared CI "
+                             "address ranges, so this can be run from elsewhere)")
     parser.add_argument("--no-prices", action="store_true",
                         help="skip the price feed (it is best-effort either way "
                              "and never fails the build)")
@@ -35,6 +39,10 @@ def main(argv: list[str] | None = None) -> int:
         format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
         level=logging.DEBUG if args.verbose else getattr(logging, config.log_level, logging.INFO),
     )
+
+    if args.prices_only:
+        run_prices_only(config)
+        return 0
 
     run(config,
         report_keys=args.report,

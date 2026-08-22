@@ -45,6 +45,14 @@ MAX_ATTEMPTS = 4
 BACKOFF_BASE = 5.0
 MAX_BACKOFF = 90.0
 
+# Backing off is right for a feed that is briefly busy and wrong for one that is
+# refusing this host outright. Shared CI address ranges get the latter: every
+# symbol burns its full retry ladder, and a 57-symbol run spends half an hour
+# waiting to collect nothing. After this many symbols fail in a row at the
+# transport level, the run gives up on the feed rather than proving the point 54
+# more times. A symbol the feed simply has no data for does not count.
+MAX_CONSECUTIVE_FAILURES = 3
+
 
 def ensure_table(conn: sqlite3.Connection) -> None:
     conn.execute("""
@@ -99,7 +107,14 @@ def _retry_after(response, attempt: int) -> float:
 
 
 def fetch_series(ticker: str, start: date, end: date,
-                 session: requests.Session | None = None) -> list[tuple[date, float]]:
+                 session: requests.Session | None = None
+                 ) -> list[tuple[date, float]] | None:
+    """Daily closes for one ticker.
+
+    Returns a list of points, an empty list when the feed answered but has
+    nothing for this symbol, or None when the feed itself could not be reached —
+    the caller needs that distinction to tell a delisted contract from a wall.
+    """
     params = {
         "period1": int(datetime.combine(start, datetime.min.time(),
                                         tzinfo=timezone.utc).timestamp()),
@@ -117,7 +132,7 @@ def fetch_series(ticker: str, start: date, end: date,
                 return parse_series(response.json())
             except ValueError:
                 logger.warning("Price feed returned non-JSON for %s", ticker)
-                return []
+                return None
 
         if response.status_code in RETRY_STATUS and attempt < MAX_ATTEMPTS - 1:
             wait = _retry_after(response, attempt)
@@ -127,9 +142,9 @@ def fetch_series(ticker: str, start: date, end: date,
             continue
 
         logger.warning("Price feed HTTP %s for %s", response.status_code, ticker)
-        return []
+        return None
 
-    return []
+    return None
 
 
 def last_stored(conn: sqlite3.Connection, symbol: str) -> date | None:
@@ -148,6 +163,7 @@ def update_all(conn: sqlite3.Connection, start: date, end: date | None = None,
     ensure_table(conn)
     end = end or date.today()
     updated = 0
+    consecutive_failures = 0
     session = requests.Session()
 
     for symbol, ticker in price_targets().items():
@@ -161,11 +177,21 @@ def update_all(conn: sqlite3.Connection, start: date, end: date | None = None,
             points = fetch_series(ticker, since, end, session)
         except requests.RequestException as exc:
             logger.warning("Price fetch failed for %s (%s): %s", symbol, ticker, exc)
-            points = []
+            points = None
         except Exception:  # noqa: BLE001 - the weekly build must survive anything here
             logger.exception("Unexpected error fetching %s (%s)", symbol, ticker)
-            points = []
+            points = None
 
+        if points is None:
+            consecutive_failures += 1
+            if consecutive_failures >= MAX_CONSECUTIVE_FAILURES:
+                logger.warning(
+                    "Price feed unreachable for %d markets in a row; abandoning the "
+                    "price update for this run", consecutive_failures)
+                break
+            continue
+
+        consecutive_failures = 0
         if not points:
             logger.info("No price data for %s (%s)", symbol, ticker)
             continue

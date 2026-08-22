@@ -16,7 +16,8 @@ from cot.export import report_index_entry, write_index, write_report_years
 from cot.markets import (COMMODITY_MARKETS, FINANCIAL_MARKETS,
                          PRICE_SYMBOL_OVERRIDES, price_targets)
 from cot.metrics import _rolling_percentile, enrich
-from cot.prices import _as_of, parse_series, update_all, weekly_closes
+from cot.prices import (MAX_CONSECUTIVE_FAILURES, _as_of, parse_series,
+                        update_all, weekly_closes)
 from cot.prices import ensure_table as ensure_prices_table
 from cot.reports import REPORTS
 from cot.store import ensure_table, ingest_file, read_report
@@ -194,3 +195,32 @@ def test_update_all_never_raises_when_the_feed_is_broken(tmp_path, monkeypatch):
 
     monkeypatch.setattr("cot.prices.fetch_series", lambda *a, **k: [])
     assert update_all(conn, date(2026, 1, 1), date(2026, 1, 8), polite_delay=False) == 0
+
+
+def test_update_all_gives_up_once_the_feed_stops_answering(tmp_path, monkeypatch):
+    """A host the feed refuses outright would otherwise burn the full retry
+    ladder on every one of the mapped markets."""
+    conn = sqlite3.connect(tmp_path / "p.db")
+    attempts = []
+
+    def refuse(ticker, *args, **kwargs):
+        attempts.append(ticker)
+        return None
+
+    monkeypatch.setattr("cot.prices.fetch_series", refuse)
+    assert update_all(conn, date(2026, 1, 1), date(2026, 1, 8), polite_delay=False) == 0
+    assert len(attempts) == MAX_CONSECUTIVE_FAILURES
+
+
+def test_a_symbol_without_data_does_not_trip_the_breaker(tmp_path, monkeypatch):
+    """An empty answer is a delisted contract, not a wall — the run carries on."""
+    conn = sqlite3.connect(tmp_path / "p.db")
+    seen = []
+
+    def empty(ticker, *args, **kwargs):
+        seen.append(ticker)
+        return []
+
+    monkeypatch.setattr("cot.prices.fetch_series", empty)
+    update_all(conn, date(2026, 1, 1), date(2026, 1, 8), polite_delay=False)
+    assert len(seen) == len(price_targets())
