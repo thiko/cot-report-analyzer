@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>COT Report Analyser</title>
+<meta name="description" content="Weekly CFTC Commitments of Traders positioning across the disaggregated, legacy, financial and supplemental reports.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='13'>📊</text></svg>">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="masthead__bar">
+    <h1 class="masthead__title">COT Report Analyser</h1>
+    <span class="masthead__meta" id="build-meta"></span>
+    <span class="masthead__spacer"></span>
+    <button class="btn" id="theme-toggle" type="button" aria-label="Switch colour theme">Theme</button>
+  </div>
+  <nav class="tabs" id="report-tabs" role="tablist" aria-label="COT report type"></nav>
+</header>
+
+<main class="shell">
+  <p class="intro" id="report-description"></p>
+
+  <section class="toolbar" aria-label="Filters">
+    <div class="field">
+      <label class="field__label" for="date-select">Report date</label>
+      <select id="date-select"></select>
+    </div>
+    <div class="field">
+      <label class="field__label" for="compare-select">Compare with</label>
+      <select id="compare-select"></select>
+    </div>
+    <div class="field">
+      <label class="field__label" for="category-select">Category</label>
+      <select id="category-select"></select>
+    </div>
+    <div class="field">
+      <label class="field__label" for="search-input">Search</label>
+      <input type="search" id="search-input" placeholder="Corn, GC, …" autocomplete="off">
+    </div>
+    <div class="field">
+      <span class="field__label" id="groups-label">Trader groups</span>
+      <div class="chips" id="group-chips" role="group" aria-labelledby="groups-label"></div>
+    </div>
+    <div class="field">
+      <span class="field__label" id="measure-label">Net shown as</span>
+      <div class="chips" id="measure-chips" role="group" aria-labelledby="measure-label">
+        <button class="chip" type="button" data-measure="net" aria-pressed="true">Contracts</button>
+        <button class="chip" type="button" data-measure="pct_oi" aria-pressed="false">% of OI</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="table-wrap">
+    <table class="cot" id="cot-table">
+      <caption class="visually-hidden">Net positioning by market and trader group</caption>
+      <thead id="table-head"></thead>
+      <tbody id="table-body"></tbody>
+    </table>
+  </div>
+  <p class="status" id="status" hidden></p>
+
+  <section class="notes">
+    <div class="panel">
+      <h2 class="panel__title">Reading the table</h2>
+      <ul>
+        <li><strong>Net</strong> is long minus short positions for that trader group. Positive means net long.</li>
+        <li><strong>Δ week</strong> is the change the CFTC reports against the prior week.</li>
+        <li><strong>25w / 52w / 3y</strong> are percentile ranks of the current net position within that trailing window. 90 means the position has been more long than this in only 10% of the weeks.</li>
+        <li>Blue marks the net-long end of a market's own range, red the net-short end. The number always carries the value; colour only repeats it.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h2 class="panel__title">Who is who</h2>
+      <ul id="group-glossary"></ul>
+    </div>
+    <div class="panel">
+      <h2 class="panel__title">Source</h2>
+      <ul>
+        <li>CFTC Commitments of Traders, published Fridays at 15:30 ET for the preceding Tuesday.</li>
+        <li>Every report type is rebuilt weekly and committed to the repository, so any past week stays reachable through the date picker.</li>
+        <li id="term-structure-note"></li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<div class="tooltip" id="tooltip" role="status" aria-live="polite"></div>
+<script src="app.js" type="module"></script>
+</body>
+</html>

@@ -1,59 +1,44 @@
+#!/usr/bin/env python3
+"""Build the COT report data set consumed by the static site."""
+
 import argparse
-import configparser
 import logging
-import sqlite3
-from datetime import datetime, timedelta
+import sys
 
-from database.migrate import execute_sql_files
-from disaggregated_fut.disaggregated_fut import load_data_and_generate_report
-from summary_report.generate_summary import generate_output_summary
-from term_structure.scrape_term_structure import \
-    scrape_all_known_term_structures
-
-DATETIME_FOMRAT = "%Y-%m-%d"
-
-def load_config(config_file='config.ini'):
-    config = configparser.ConfigParser()
-    config.read(config_file)
-    return config
-
-def get_last_tuesday():
-    today = datetime.now().date()
-    days_since_tuesday = (today.weekday() - 1) % 7
-    last_tuesday = today - timedelta(days=days_since_tuesday)
-    return last_tuesday
+from cot.config import Config
+from cot.pipeline import run
+from cot.reports import REPORTS
 
 
-def main():
-    
-    parser = argparse.ArgumentParser(description='')
-    parser.add_argument('-c', '--config', help='Path to config file', default='config.ini')
-    parser.add_argument('-d', '--date', nargs='?', help='Optional parameter if you want to generate the report for one specific date (format: YYYY-mm-dd). Default: Last Tuesday (or today, if its Tuesday)', default=get_last_tuesday().strftime(DATETIME_FOMRAT))
-    args = parser.parse_args()
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("-c", "--config", default="config.ini", help="path to config.ini")
+    parser.add_argument("-r", "--report", action="append", choices=sorted(REPORTS),
+                        help="only build this report type (repeatable)")
+    parser.add_argument("--term-structure", action="store_true",
+                        help="also scrape CME settlements for term structure curves "
+                             "(CME blocks automated access, so this usually fails)")
+    parser.add_argument("--no-download", action="store_true",
+                        help="export from the existing database without fetching data")
+    parser.add_argument("-v", "--verbose", action="store_true", help="debug logging")
+    return parser.parse_args(argv)
 
-    # load config
-    config = load_config(args.config)
-    target_date = datetime.strptime(args.date, DATETIME_FOMRAT)
 
-    tmp_output_dir = config['App']['output_tmp_directory']
-    reports_output_dir = config['App']['output_reports_directory']
-    database_file = config['App']['database_filename']
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
+    config = Config.load(args.config)
 
-    debug_mode = config['DEFAULT'].getboolean('debug')
-    log_level = logging.DEBUG if debug_mode == True else logging.INFO
-    logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=log_level)
-    
-    print(f"Debug-Mode: {'On' if debug_mode else 'Off'}")
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
+        level=logging.DEBUG if args.verbose else getattr(logging, config.log_level, logging.INFO),
+    )
 
-    db_connection = sqlite3.connect(f'{tmp_output_dir}/{database_file}')
-    execute_sql_files('database/resources', db_connection)
+    run(config,
+        report_keys=args.report,
+        with_term_structure=args.term_structure,
+        download=not args.no_download)
+    return 0
 
-    try:    
-        scrape_all_known_term_structures(conn=db_connection)
-        load_data_and_generate_report(tmp_output_dir, reports_output_dir, db_connection, target_date)        
-        generate_output_summary(reports_output_dir)
-    finally:
-        db_connection.close()
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

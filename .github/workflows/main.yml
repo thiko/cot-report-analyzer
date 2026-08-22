@@ -1,35 +1,86 @@
-name: CFTC COT Report Generator
+name: COT report
 
 on:
-  push:
-    branches: [ main ]
   schedule:
-    - cron: '0 20 * * 5'  # Jeden Freitag um 20:00 UTC
+    # The CFTC publishes Fridays at 15:30 ET. That is 19:30 UTC in summer and
+    # 20:30 UTC in winter, so run at 22:00 UTC to be clear of both.
+    - cron: '0 22 * * 5'
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'data/**'
+      - 'README.md'
+  workflow_dispatch:
+
+concurrency:
+  group: cot-report
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
 
 jobs:
-  build-and-deploy:
-    permissions:
-      contents: write
+  build:
     runs-on: ubuntu-latest
-    
     steps:
-    - uses: actions/checkout@v2
-    
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.11'
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-    
-    - name: Run main script
-      run: python main.py
-    
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: outputs/reports/        
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Test
+        run: python -m pytest -q
+
+      # The CFTC archives are ~15 MB per report type and year. Caching them
+      # keeps a weekly run to the current year's five downloads; on a cache
+      # miss the pipeline simply refetches everything.
+      - name: Restore CFTC archive cache
+        uses: actions/cache@v4
+        with:
+          path: outputs/tmp
+          key: cftc-archives-${{ github.run_id }}
+          restore-keys: cftc-archives-
+
+      - name: Build report data
+        run: python main.py
+
+      - name: Commit refreshed data
+        run: |
+          if [ -z "$(git status --porcelain data)" ]; then
+            echo "No data changes."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          git commit -m "data: COT report through $(python -c "import json;print(json.load(open('data/index.json'))['latest_date'])")"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          cp -r site/. _site/
+          cp -r data _site/data
+          touch _site/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

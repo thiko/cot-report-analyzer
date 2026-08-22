@@ -1,17 +1,12 @@
-*.egg-info
 __pycache__/
 *.pyc
+*.egg-info
 
+.venv/
 venv/
 .DS_Store
 
-*_cot_analysis.html
-*.csv
-annualof.txt
-c_year.txt
-f_year.txt
-*.db
-
-tmp.html
-
-outputs/reports/*.html
+# Working directory: downloaded CFTC archives and the SQLite build database.
+# Everything the site needs is exported to data/ and committed.
+outputs/
+_site/
