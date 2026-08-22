@@ -24,7 +24,45 @@ crowded positioning.
 
 Expanding a row gives the net-position history chart for the selected groups,
 the long/short/spread split, and the futures term structure when curve data is
-available.
+available. Every row also carries an ⓘ that states the week in words — what the
+position is, how stretched, which way it moved, and whether anything is flagged.
+
+## The watchlist
+
+Above the table, **Worth a closer look** scans all five report types for the
+selected week and ranks the markets where speculators sit at a 52-week extreme
+*and* the weekly flow has turned against it. One card per CFTC market code, so a
+contract flagged in three reports at once shows up as one entry with three chips
+rather than three rows.
+
+The tiers come out of a forward test over the committed history — 2022 to 2026,
+three report types, the speculator net position eight weeks later, measured in
+units of its own 52-week standard deviation:
+
+| Bucket | n | Median unwind | Unwound |
+|---|---|---|---|
+| liquid, extreme percentile only | 6201 | +0.37 | 61.1% |
+| **C** liquid + weekly flow turning | 1617 | +0.45 | 63.0% |
+| **B** C + hedgers at the mirror extreme | 987 | +0.56 | 64.2% |
+| **A** B + open interest rising | 564 | +0.57 | 66.5% |
+| *excluded* illiquid + turning + mirror | 437 | +0.26 | 57.2% |
+
+Three things this deliberately does not do. It does not flag an extreme on its
+own: that occurs in roughly 38% of market-weeks and persists for a median of
+three, because a trending position sits at the edge of its own window by
+construction. It does not rank by position concentration, which ran backwards in
+the test — past 15% of open interest the unwind got *slower*, so that rides along
+as a caution mark instead. And it drops anything under 50,000 contracts of open
+interest, which was the single largest effect measured; those markets are listed
+under the cards rather than silently dropped.
+
+**What it is not.** No price series enters this build, so every number above
+describes how the *position* unwound, not what the market did. The cards say
+which flow an unwind implies — crowded longs have to sell — and stop there.
+Treat the list as a research queue, not as a signal. Two further caveats worth
+keeping in mind: the CFTC publishes Friday for the preceding Tuesday, so the
+freshest row is already three days old on arrival, and an extreme is a condition
+rather than a trigger — it says the fuel is there, not that it has been lit.
 
 ## How the history works
 

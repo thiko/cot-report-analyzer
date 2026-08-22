@@ -64,6 +64,13 @@ const COMPARE_OFFSETS = [
   { weeks: 52, label: "52 weeks ago" },
 ];
 
+// Percentile thresholds that count as an extreme. The strong pair drives the
+// deeper wash, the plain pair both the lighter wash and the signal engine.
+const EXTREME_STRONG_HIGH = 95;
+const EXTREME_HIGH = 90;
+const EXTREME_LOW = 10;
+const EXTREME_STRONG_LOW = 5;
+
 const numberFmt = new Intl.NumberFormat("en-US");
 const signedFmt = new Intl.NumberFormat("en-US", { signDisplay: "always" });
 const pctFmt = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
@@ -81,6 +88,8 @@ const state = {
   measure: "net",
   sort: null,          // { column, direction } — null keeps the category grouping
   expanded: null,      // symbol
+  shortlistOpen: true,
+  shortlistDate: null, // date the cross-report scan currently holds data for
   detailRange: 52,
   stores: new Map(),   // report key -> merged store
   loadedYears: new Map(), // report key -> Set(year)
@@ -185,19 +194,21 @@ const reportMeta = (key) => state.index.reports.find((r) => r.key === key);
 
 /* --------------------------------------------------------------- accessors */
 
-function store() { return state.stores.get(state.report) || emptyStore(); }
+function storeFor(key) { return state.stores.get(key) || emptyStore(); }
+
+function store() { return storeFor(state.report); }
 
 function dateIndex(date) { return store().dates.indexOf(date); }
 
-function cell(groupKey, field, dateIdx, marketIdx) {
-  const group = store().groups[groupKey];
+function cell(groupKey, field, dateIdx, marketIdx, source = store()) {
+  const group = source.groups[groupKey];
   if (!group || !group[field] || dateIdx < 0) return null;
   const row = group[field][dateIdx];
   return row ? row[marketIdx] ?? null : null;
 }
 
-function oiCell(field, dateIdx, marketIdx) {
-  const rows = store()[field];
+function oiCell(field, dateIdx, marketIdx, source = store()) {
+  const rows = source[field];
   if (!rows || dateIdx < 0) return null;
   const row = rows[dateIdx];
   return row ? row[marketIdx] ?? null : null;
@@ -244,15 +255,403 @@ function deltaClass(value) {
   return "delta-zero";
 }
 
+// Trailing percentile ranks are not uniformly distributed: a net position that
+// trends sits at the edge of its own window for weeks on end, so the bottom and
+// top deciles hold roughly a third of all observations. Shading everything from
+// the 60th percentile up — as this did — coloured about four cells in five and
+// said nothing. Only the deciles that are genuinely rare get a wash now.
 function percentileStyle(value) {
   if (value === null || value === undefined) return "";
-  if (value >= 90) return "background: var(--pos-300)";
-  if (value >= 75) return "background: var(--pos-200)";
-  if (value >= 60) return "background: var(--pos-100)";
-  if (value <= 10) return "background: var(--neg-300)";
-  if (value <= 25) return "background: var(--neg-200)";
-  if (value <= 40) return "background: var(--neg-100)";
+  if (value >= EXTREME_STRONG_HIGH) return "background: var(--pos-300)";
+  if (value >= EXTREME_HIGH) return "background: var(--pos-100)";
+  if (value <= EXTREME_STRONG_LOW) return "background: var(--neg-300)";
+  if (value <= EXTREME_LOW) return "background: var(--neg-100)";
   return "";
+}
+
+/* ------------------------------------------------------------------ signal */
+
+/* What the table is worth flagging.
+ *
+ * Measured over the committed history (2022-2026, three report types, ~9,000
+ * market-weeks where the speculator group sits in its top or bottom decile),
+ * asking how far the net position had unwound eight weeks later, in units of
+ * its own 52-week standard deviation:
+ *
+ *   extreme percentile alone      median +0.29  reverted 59.0% of the time
+ *   + weekly flow turning         median +0.36               61.0%
+ *   + hedgers at the mirror       median +0.44               62.1%
+ *
+ * So the extreme is context, not an event — the turn is the event, and the
+ * hedger mirror confirms it. Three candidates that looked plausible did not
+ * survive the same test and are deliberately absent: agreement across the 25w,
+ * 52w and 3y windows (no better than the 52w alone, worse in the financials),
+ * a freshly entered extreme (+0.28 / 57.8%, below the baseline — a trend that
+ * just started does not turn), and a 2-sigma weekly flow shock (27 cases,
+ * +0.15 median, less than the plain sign of the weekly change).
+ */
+
+// The pair the engine reads, matching cot/metrics.py's gap pair: the first
+// commercial group and the first speculator group of the report.
+function signalPair(meta) {
+  const speculator = meta.groups.find((g) => g.stance === "speculator");
+  const commercial = meta.groups.find((g) => g.stance === "commercial");
+  return speculator && commercial ? { speculator, commercial } : null;
+}
+
+function marketSignal(meta, idx, marketIdx, source = store()) {
+  const pair = signalPair(meta);
+  if (!pair) return null;
+
+  const specPct = cell(pair.speculator.key, "p52w", idx, marketIdx, source);
+  if (specPct === null) return null;
+
+  const side = specPct >= EXTREME_HIGH ? 1 : (specPct <= EXTREME_LOW ? -1 : 0);
+  const chg = cell(pair.speculator.key, "chg", idx, marketIdx, source);
+  const commPct = cell(pair.commercial.key, "p52w", idx, marketIdx, source);
+
+  const turning = side !== 0 && chg !== null && side * chg < 0;
+  const mirror = side !== 0 && commPct !== null &&
+    (side > 0 ? commPct <= EXTREME_LOW : commPct >= EXTREME_HIGH);
+
+  return {
+    side,
+    turning,
+    mirror,
+    level: turning ? (mirror ? 2 : 1) : 0,
+    spec: pair.speculator,
+    comm: pair.commercial,
+    specPct,
+    commPct,
+    chg,
+    net: cell(pair.speculator.key, "net", idx, marketIdx, source),
+    pctOi: cell(pair.speculator.key, "pct_oi", idx, marketIdx, source),
+    p25: cell(pair.speculator.key, "p25w", idx, marketIdx, source),
+    p156: cell(pair.speculator.key, "p156w", idx, marketIdx, source),
+  };
+}
+
+const SIGNAL_LABEL = { 2: "Reversal", 1: "Turning" };
+
+function signalBadge(signal) {
+  const badge = document.createElement("span");
+  badge.className = `signal signal--${signal.level} signal--${signal.side > 0 ? "long" : "short"}`;
+  badge.textContent = SIGNAL_LABEL[signal.level];
+  badge.title = signal.level === 2
+    ? "Speculators at a 52-week extreme, the weekly flow running against it, and hedgers at the mirror extreme."
+    : "Speculators at a 52-week extreme with the weekly flow running against it.";
+  return badge;
+}
+
+/* ------------------------------------------------------- situation summary */
+
+/* The row's ⓘ button. This report gets opened every few weeks at best, by
+ * which time nobody remembers what a blue 96 in the third column meant, so the
+ * summary spells out the current row in words instead of leaving the reader to
+ * decode the colours. */
+function situationMarkup(market, marketIdx, idx, meta) {
+  const paras = [];
+  const signal = marketSignal(meta, idx, marketIdx);
+
+  if (!signal) {
+    paras.push(`No speculator/hedger pair is defined for this report, so there is
+      nothing to summarise beyond the columns themselves.`);
+  } else {
+    const dir = signal.net === null ? null : (signal.net >= 0 ? "long" : "short");
+    const size = signal.net === null ? "—" : numberFmt.format(Math.abs(signal.net));
+    const share = signal.pctOi === null ? "" :
+      `, ${pctFmt.format(Math.abs(signal.pctOi))}% of open interest`;
+
+    paras.push(`<b>${esc(signal.spec.label)}</b> is net <b>${dir ?? "flat"} ${size}</b>
+      contracts${share}.`);
+
+    const windows = [
+      signal.p25 === null ? null : `${ordinal(signal.p25)} over 25 weeks`,
+      signal.p156 === null ? null : `${ordinal(signal.p156)} over three years`,
+    ].filter(Boolean).join(", ");
+
+    const reading = signal.side > 0 ? "this crowd has rarely been more long"
+      : (signal.side < 0 ? "this crowd has rarely been more short"
+                         : "mid-range, nothing stretched");
+    paras.push(`That is the <b>${ordinal(signal.specPct)} percentile</b> of the last
+      52 weeks${windows ? ` (${windows})` : ""} — ${reading}. In the percentile columns
+      blue marks the net-long end of a market's own range and red the net-short end;
+      only the top and bottom decile get any wash.`);
+
+    // Said as a rise or fall of the net figure, never as "added" or "cut": on a
+    // net-short book a falling number means the short grew, and the plain verb
+    // reads as the opposite.
+    if (signal.chg !== null && signal.chg !== 0) {
+      const verb = signal.chg > 0 ? "rose" : "fell";
+      const against = signal.turning
+        ? " — movement against the extreme, which is what the badge tracks"
+        : (signal.side !== 0 ? " — still pushing the extreme further" : "");
+      paras.push(`This week the net figure <b>${verb} ${numberFmt.format(Math.abs(signal.chg))}</b>
+        contracts${against}.`);
+    }
+
+    if (signal.commPct !== null) {
+      const mirrorNote = signal.mirror
+        ? ", the mirror image — both sides of the market sit at their limit"
+        : "";
+      paras.push(`<b>${esc(signal.comm.label)}</b> holds the
+        <b>${ordinal(signal.commPct)} percentile</b>${mirrorNote}.`);
+    }
+
+    paras.push(verdictHtml(signal));
+  }
+
+  return `<div class="tooltip__date">${esc(market.name)} · ${esc(market.symbol)} · ${esc(state.date)}</div>
+    <div class="tooltip__note">${paras.map((t) => `<p>${t}</p>`).join("")}</div>`;
+}
+
+function verdictHtml(signal) {
+  if (signal.level === 2) {
+    return `<span class="verdict verdict--strong">Reversal setup</span> — crowded,
+      turning, and confirmed by the hedgers. Historically the strongest of the three
+      buckets, and it still only unwound about six times in ten.`;
+  }
+  if (signal.level === 1) {
+    return `<span class="verdict">Turning</span> — crowded with the flow going the other
+      way, but the hedgers are not at the matching extreme, so the weaker of the two
+      flags.`;
+  }
+  if (signal.side !== 0) {
+    return `<span class="verdict verdict--muted">No flag</span> — positioning is extreme
+      but still building in the same direction. On its own an extreme says little; it
+      persists for a median of three weeks and has run as long as 94.`;
+  }
+  return `<span class="verdict verdict--muted">No flag</span> — positioning is nowhere
+    near an extreme this week.`;
+}
+
+function ordinal(value) {
+  const n = Math.round(value);
+  const tens = n % 100;
+  if (tens >= 11 && tens <= 13) return `${n}th`;
+  return `${n}${["th", "st", "nd", "rd"][n % 10] || "th"}`;
+}
+
+function esc(text) {
+  return String(text ?? "").replace(/[&<>"]/g, (ch) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+}
+
+/* --------------------------------------------------------------- shortlist */
+
+/* The watchlist: which markets are worth a closer look this week, ranked, in
+ * one list across all five report types.
+ *
+ * The tiers are not invented, they are the buckets that separated in the same
+ * forward test as the row badges (2022-2026, net position eight weeks later, in
+ * units of its own 52-week deviation):
+ *
+ *   liquid, extreme only                      n=6201  median +0.37  61.1%
+ *   C  liquid + flow turning                  n=1617         +0.45  63.0%
+ *   B  C + hedgers at the mirror              n= 987         +0.56  64.2%
+ *   A  B + open interest rising               n= 564         +0.57  66.5%
+ *   (excluded) illiquid + turning + mirror    n= 437         +0.26  57.2%
+ *
+ * The liquidity cut is the single biggest effect in the whole exercise and the
+ * reason for the exclusion list: below 50k contracts of open interest a
+ * percentile extreme is mostly noise in a market too small to mean much. Two
+ * candidate refinements were tested and rejected — clustering by category
+ * (62.3% against 62.2%, no effect) and position concentration, which turned out
+ * to work backwards: past 15% of open interest the unwind got slower, not
+ * faster, so it rides along as a caution mark rather than a filter.
+ */
+
+const SHORTLIST_MIN_OI = 50000;
+const SHORTLIST_CONCENTRATED = 15;
+const SHORTLIST_OI_LOOKBACK = 4;
+const TIER_ORDER = { A: 0, B: 1, C: 2 };
+
+const TIER_NOTE = {
+  A: "Crowded, turning, hedgers at the mirror, and open interest rising — fresh money arriving as the extreme breaks.",
+  B: "Crowded, turning, hedgers at the mirror, but open interest is flat or falling.",
+  C: "Crowded and turning, without the hedgers at the matching extreme.",
+};
+
+// One entry per contract, not per report: the same CFTC market code appears in
+// up to three report types, and three of them flagging it at once is a sturdier
+// reading than any single one. The best tier wins, the rest ride along as chips.
+function shortlistCandidates(date) {
+  const byMarket = new Map();
+  const excluded = [];
+
+  state.index.reports.forEach((meta) => {
+    const source = storeFor(meta.key);
+    const idx = source.dates.indexOf(date);
+    if (idx < 0) return;
+
+    source.markets.forEach((market, marketIdx) => {
+      const signal = marketSignal(meta, idx, marketIdx, source);
+      if (!signal || signal.level < 1) return;
+
+      const oi = oiCell("open_interest", idx, marketIdx, source);
+      if (oi === null) return;
+      if (oi < SHORTLIST_MIN_OI) {
+        excluded.push({ symbol: market.symbol, name: market.name, oi });
+        return;
+      }
+
+      const back = idx - SHORTLIST_OI_LOOKBACK;
+      const oiThen = back >= 0 ? oiCell("open_interest", back, marketIdx, source) : null;
+      const oiRising = oiThen !== null && oi > oiThen;
+      const tier = signal.level === 2 ? (oiRising ? "A" : "B") : "C";
+
+      const stamp = { key: meta.key, label: meta.short_label, tier, marketIdx, idx };
+      const existing = byMarket.get(market.symbol);
+      if (!existing) {
+        byMarket.set(market.symbol, {
+          symbol: market.symbol, name: market.name, category: market.category,
+          tier, side: signal.side, signal, oi, oiRising,
+          pctOi: signal.pctOi, source: stamp, reports: [stamp],
+        });
+        return;
+      }
+      existing.reports.push(stamp);
+      if (TIER_ORDER[tier] < TIER_ORDER[existing.tier]) {
+        Object.assign(existing, {
+          tier, side: signal.side, signal, oi, oiRising, pctOi: signal.pctOi, source: stamp,
+        });
+      }
+    });
+  });
+
+  const rows = [...byMarket.values()].sort((a, b) =>
+    TIER_ORDER[a.tier] - TIER_ORDER[b.tier]
+    || b.reports.length - a.reports.length
+    || Math.abs(b.signal.specPct - 50) - Math.abs(a.signal.specPct - 50)
+    || b.oi - a.oi);
+
+  const seen = new Set();
+  const thin = excluded.filter((m) => !seen.has(m.symbol) && seen.add(m.symbol));
+  return { rows, excluded: thin };
+}
+
+// The shortlist reads every report at once, so it needs their year files, not
+// just the active tab's. Only the year in view — plus the one before it early in
+// January, for the four-week open-interest lookback.
+async function ensureShortlistData(date) {
+  const year = Number(date.slice(0, 4));
+  const week = Math.floor((Date.parse(date) - Date.parse(`${year}-01-01`)) / 6048e5);
+  const wanted = week < SHORTLIST_OI_LOOKBACK + 2 ? [year, year - 1] : [year];
+  await Promise.all(state.index.reports.flatMap((meta) =>
+    wanted.filter((y) => meta.years.includes(y))
+      .map((y) => ensureYear(meta.key, y).catch(() => {}))));
+  state.shortlistDate = date;
+}
+
+function renderShortlist() {
+  const section = el("shortlist");
+  const body = el("shortlist-body");
+  const count = el("shortlist-count");
+  const note = el("shortlist-note");
+
+  section.dataset.open = String(state.shortlistOpen);
+  const toggle = el("shortlist-toggle");
+  toggle.setAttribute("aria-expanded", String(state.shortlistOpen));
+  toggle.onclick = () => { state.shortlistOpen = !state.shortlistOpen; renderShortlist(); };
+
+  if (state.shortlistDate !== state.date) {
+    count.textContent = "scanning…";
+    body.replaceChildren();
+    note.textContent = "";
+    return;
+  }
+
+  const { rows, excluded } = shortlistCandidates(state.date);
+  count.textContent = rows.length
+    ? `${rows.length} market${rows.length === 1 ? "" : "s"}`
+    : "nothing flagged";
+
+  note.textContent = excluded.length
+    ? `Held back as too thin to read — under ${numberFmt.format(SHORTLIST_MIN_OI)} contracts of open interest: `
+      + excluded.map((m) => `${m.name} (${m.symbol})`).join(", ") + "."
+    : "";
+
+  if (!rows.length) {
+    body.replaceChildren(Object.assign(document.createElement("p"), {
+      className: "shortlist__empty",
+      textContent: "No market is at a positioning extreme with the weekly flow turning against it this week.",
+    }));
+    return;
+  }
+
+  body.replaceChildren(...rows.map(shortlistCard));
+}
+
+function shortlistCard(row) {
+  const card = document.createElement("button");
+  card.className = `card card--${row.tier}`;
+  card.type = "button";
+  card.onclick = () => selectReport(row.source.key, {
+    date: state.date, market: row.symbol,
+  });
+
+  const head = document.createElement("div");
+  head.className = "card__head";
+  const tier = document.createElement("span");
+  tier.className = `card__tier card__tier--${row.tier}`;
+  tier.textContent = row.tier;
+  tier.title = TIER_NOTE[row.tier];
+  const name = document.createElement("span");
+  name.className = "card__name";
+  name.textContent = row.name;
+  const symbol = document.createElement("span");
+  symbol.className = "card__symbol";
+  symbol.textContent = row.symbol;
+  head.append(tier, name, symbol);
+
+  // Stated as the flow that an unwind implies, because that is what was
+  // measured. It is not a read on price: no price series enters this build.
+  const pressure = document.createElement("p");
+  pressure.className = `card__pressure card__pressure--${row.side > 0 ? "long" : "short"}`;
+  pressure.textContent = row.side > 0
+    ? "Speculators crowded long — an unwind means them selling"
+    : "Speculators crowded short — an unwind means them buying";
+
+  const facts = document.createElement("dl");
+  facts.className = "card__facts";
+  const fact = (key, value, className = "") => {
+    const dt = document.createElement("dt");
+    dt.textContent = key;
+    const dd = document.createElement("dd");
+    dd.textContent = value;
+    if (className) dd.className = className;
+    facts.append(dt, dd);
+  };
+  fact(`${row.signal.spec.label} 52w`, `${ordinal(row.signal.specPct)}`);
+  fact(`${row.signal.comm.label} 52w`,
+       row.signal.commPct === null ? "—" : ordinal(row.signal.commPct));
+  fact("Open interest", `${compact(row.oi)}${row.oiRising ? " ↑" : ""}`);
+  fact("Share of OI", row.pctOi === null ? "—" : `${pctFmt.format(Math.abs(row.pctOi))}%`,
+       row.pctOi !== null && Math.abs(row.pctOi) >= SHORTLIST_CONCENTRATED ? "warn" : "");
+
+  const chips = document.createElement("div");
+  chips.className = "card__reports";
+  row.reports
+    .slice()
+    .sort((a, b) => TIER_ORDER[a.tier] - TIER_ORDER[b.tier])
+    .forEach((stamp) => {
+      const chip = document.createElement("span");
+      chip.className = "card__report";
+      chip.textContent = stamp.label;
+      chips.append(chip);
+    });
+
+  card.append(head, pressure, facts, chips);
+
+  if (row.pctOi !== null && Math.abs(row.pctOi) >= SHORTLIST_CONCENTRATED) {
+    const warn = document.createElement("p");
+    warn.className = "card__warn";
+    warn.textContent = `Position is ${pctFmt.format(Math.abs(row.pctOi))}% of open interest.`
+      + " Historically the heavily concentrated ones unwound more slowly, not faster.";
+    card.append(warn);
+  }
+
+  return card;
 }
 
 /* ------------------------------------------------------------------ render */
@@ -262,6 +661,7 @@ function render() {
   renderTabs();
   renderDescription();
   renderControls();
+  renderShortlist();
   renderTable();
   renderGlossary();
   syncHash();
@@ -298,6 +698,7 @@ function renderControls() {
     state.date = event.target.value;
     state.expanded = null;
     ensureReportData(state.report, state.date).then(render);
+    ensureShortlistData(state.date).then(render);
     render();
   };
 
@@ -400,6 +801,7 @@ function sortValue(column, idx, marketIdx) {
 }
 
 function renderTable() {
+  unpinTooltip();
   const meta = reportMeta(state.report);
   const groups = activeGroups();
   const cmp = compareDateIndex();
@@ -440,7 +842,7 @@ function renderTable() {
       currentCategory = market.category;
       nodes.push(categoryRow(market.category, columnCount));
     }
-    nodes.push(marketRow(market, i, idx, cmp, groups, metrics));
+    nodes.push(marketRow(market, i, idx, cmp, groups, metrics, meta));
     if (state.expanded === market.symbol) {
       nodes.push(detailRow(market, i, idx, columnCount, meta));
     }
@@ -512,7 +914,7 @@ function categoryRow(category, columnCount) {
   return row;
 }
 
-function marketRow(market, marketIdx, idx, cmp, groups, metrics) {
+function marketRow(market, marketIdx, idx, cmp, groups, metrics, meta) {
   const row = document.createElement("tr");
   row.className = "market-row";
 
@@ -537,6 +939,13 @@ function marketRow(market, marketIdx, idx, cmp, groups, metrics) {
   symbol.textContent = market.symbol;
   label.append(symbol);
   nameCell.append(toggle, label);
+
+  const signal = marketSignal(meta, idx, marketIdx);
+  if (signal && signal.level > 0) {
+    nameCell.append(signalBadge(signal));
+    row.classList.add(`has-signal-${signal.level}`);
+  }
+  nameCell.append(infoButton(market, marketIdx, idx, meta));
   row.append(nameCell);
 
   row.append(td(fmtInt(oiCell("open_interest", idx, marketIdx))));
@@ -577,6 +986,16 @@ function groupCell(groupKey, metric, idx, cmp, marketIdx) {
   if (value !== null) chip.setAttribute("style", percentileStyle(value));
   cellEl.append(chip);
   return cellEl;
+}
+
+function infoButton(market, marketIdx, idx, meta) {
+  const button = document.createElement("button");
+  button.className = "info";
+  button.type = "button";
+  button.textContent = "\u24d8";
+  button.setAttribute("aria-label", `What the numbers say about ${market.name}`);
+  attachTooltip(button, () => situationMarkup(market, marketIdx, idx, meta), { pin: true });
+  return button;
 }
 
 function td(text, className = "") {
@@ -947,7 +1366,12 @@ function compact(value) {
 
 const tooltipNode = () => el("tooltip");
 
-function showTooltip(event, markup) {
+// A pinned tooltip survives the pointer leaving its trigger, so the row summary
+// can be read at leisure — and on a touch screen at all.
+let tooltipPinned = false;
+
+function showTooltip(event, markup, force = false) {
+  if (tooltipPinned && !force) return;
   const node = tooltipNode();
   node.innerHTML = markup;
   node.dataset.visible = "true";
@@ -959,17 +1383,36 @@ function showTooltip(event, markup) {
 }
 
 function hideTooltip() {
+  if (tooltipPinned) return;
   tooltipNode().dataset.visible = "false";
 }
 
-function attachTooltip(node, markup) {
-  node.addEventListener("pointerenter", (event) => showTooltip(event, markup()));
-  node.addEventListener("pointermove", (event) => showTooltip(event, markup()));
+function unpinTooltip() {
+  tooltipPinned = false;
+  const node = tooltipNode();
+  node.dataset.pinned = "false";
+  node.dataset.visible = "false";
+}
+
+function attachTooltip(node, markup, { pin = false } = {}) {
+  const place = (event) => showTooltip(event, markup());
+  node.addEventListener("pointerenter", place);
+  node.addEventListener("pointermove", place);
   node.addEventListener("pointerleave", hideTooltip);
-  node.addEventListener("focus", (event) => showTooltip(
-    { clientX: node.getBoundingClientRect().left, clientY: node.getBoundingClientRect().bottom },
-    markup()));
+  node.addEventListener("focus", () => {
+    const box = node.getBoundingClientRect();
+    place({ clientX: box.left, clientY: box.bottom });
+  });
   node.addEventListener("blur", hideTooltip);
+
+  if (!pin) return;
+  node.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (tooltipPinned) { unpinTooltip(); return; }
+    showTooltip(event, markup(), true);
+    tooltipPinned = true;
+    tooltipNode().dataset.pinned = "true";
+  });
 }
 
 /* ---------------------------------------------------------------- glossary */
@@ -1040,10 +1483,15 @@ async function selectReport(key, options = {}) {
   render();
   await ensureReportData(key, state.date);
   render();
+  ensureShortlistData(state.date).then(render);
 }
 
 async function boot() {
   initTheme();
+  document.addEventListener("click", () => { if (tooltipPinned) unpinTooltip(); });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && tooltipPinned) unpinTooltip();
+  });
   await resolveDataRoot();
   try {
     state.index = await loadJson(`${DATA_ROOT}/index.json`);

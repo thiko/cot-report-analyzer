@@ -52,6 +52,22 @@
     </div>
   </section>
 
+  <section class="shortlist" id="shortlist" data-open="true" aria-labelledby="shortlist-title">
+    <div class="shortlist__head">
+      <button class="shortlist__toggle" id="shortlist-toggle" type="button"
+              aria-expanded="true" aria-controls="shortlist-body">
+        <span class="shortlist__caret" aria-hidden="true"></span>
+        <h2 class="shortlist__title" id="shortlist-title">Worth a closer look</h2>
+      </button>
+      <span class="shortlist__count" id="shortlist-count"></span>
+      <span class="shortlist__blurb">Every report type scanned for this week: positioning at a
+        52-week extreme with the weekly flow turning against it, ranked. A shortlist for research,
+        not a signal — no price series enters this build, so nothing here is a read on direction.</span>
+    </div>
+    <div class="shortlist__body" id="shortlist-body"></div>
+    <p class="shortlist__note" id="shortlist-note"></p>
+  </section>
+
   <div class="table-wrap">
     <table class="cot" id="cot-table">
       <caption class="visually-hidden">Net positioning by market and trader group</caption>
@@ -68,7 +84,17 @@
         <li><strong>Net</strong> is long minus short positions for that trader group. Positive means net long.</li>
         <li><strong>Δ week</strong> is the change the CFTC reports against the prior week.</li>
         <li><strong>25w / 52w / 3y</strong> are percentile ranks of the current net position within that trailing window. 90 means the position has been more long than this in only 10% of the weeks.</li>
-        <li>Blue marks the net-long end of a market's own range, red the net-short end. The number always carries the value; colour only repeats it.</li>
+        <li>Blue marks the net-long end of a market's own range, red the net-short end. Only the top and bottom decile are shaded, deeper past the 95th and 5th; everything between stays plain. The number always carries the value, colour only repeats it.</li>
+        <li>The <strong>&#x24d8;</strong> on each row spells the current week out in words — what the position is, how stretched, which way it moved and whether anything is flagged. Hover it, or click to pin it open.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h2 class="panel__title">The two flags</h2>
+      <ul>
+        <li><strong>Reversal</strong> — speculators sit in the top or bottom decile of their 52-week range, the weekly change runs <em>against</em> that extreme, and hedgers hold the mirror extreme on the other side. Roughly 5% of market-weeks.</li>
+        <li><strong>Turning</strong> — the same extreme and the same counter-flow, but without the hedger confirmation. Roughly 9% of market-weeks.</li>
+        <li>Measured over the committed 2022&ndash;2026 history, eight weeks forward, in units of each market's own 52-week deviation: an extreme percentile on its own unwound 59% of the time, adding the turn 61%, adding the hedger mirror 62%. Useful as a shortlist, not as a trigger.</li>
+        <li>An extreme percentile alone is <em>not</em> flagged. It occurs in nearly 40% of market-weeks and persists for a median of three, because a trending position sits at the edge of its own window by construction.</li>
       </ul>
     </div>
     <div class="panel">
