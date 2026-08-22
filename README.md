@@ -112,7 +112,7 @@ python -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python main.py                 # build every report into data/
 .venv/bin/python main.py -r legacy_fut   # one report type only
 .venv/bin/python main.py --no-download   # re-export from the existing database
-.venv/bin/python main.py --no-prices     # skip the price feed
+.venv/bin/python main.py --prices        # also refresh the price feed
 python -m http.server 8000               # then open http://localhost:8000/site/
 ```
 
@@ -130,26 +130,30 @@ currency hedging, its own roll schedule) that a return computed off it would not
 be the contract's return, and a quietly substituted series is worse than an
 absent one.
 
-The stage is best effort by construction and cannot fail a build. Every fetch is
-wrapped, a symbol that errors is logged and skipped, rate limits are waited out
-with backoff and then given up on, and `_update_prices` catches whatever is left.
-Keeping the committed COT history current is what the weekly run exists for; a
-price feed that is throttled or has changed shape must not be able to take that
-with it. `--no-prices` skips the stage entirely.
+**The stage is off by default and currently has no working source.** Yahoo
+answers GitHub's shared address ranges with a standing HTTP 429 — not a burst
+limit that clears, but a refusal — and it also blocked an ordinary residential
+address for hours after roughly eighty requests. It is not dependable enough to
+build on, so nothing in the weekly run touches it.
 
-**The feed does not answer the weekly runner.** GitHub's shared address ranges
-get HTTP 429 on every request, not as a burst limit but as a standing refusal,
-and the retry ladder turned that into half an hour of waiting for nothing. So
-the workflow runs with `--no-prices`, and a circuit breaker abandons the stage
-after three consecutive transport failures wherever it runs. Prices are
-refreshed separately from a host the feed does answer:
+The code stays because the problem is the source rather than the design, and
+swapping in another one is a matter of `fetch_series` and the ticker map. A
+key-authenticated API would sidestep the whole issue, since address reputation
+stops mattering once a request is authenticated.
+
+If you want to run it anyway:
 
 ```bash
-.venv/bin/python main.py --prices-only   # then commit data/prices.json
+.venv/bin/python main.py --prices        # as part of a normal build
+.venv/bin/python main.py --prices-only   # feed only, then commit data/prices.json
 ```
 
-A symbol the feed answers but has no data for is a delisted contract, not a
-wall, and does not count against the breaker.
+It cannot fail a build either way. Every fetch is wrapped, `_update_prices`
+catches whatever is left, and a circuit breaker abandons the stage after three
+consecutive transport failures rather than working through the retry ladder for
+every market. A symbol the feed answers but has no data for is a delisted
+contract, not a wall, and does not count against the breaker. Per-symbol storage
+is incremental, so a partial run is kept and the next one continues from it.
 
 Stooq was the first choice and is not usable: it now answers automated requests
 with a JavaScript proof-of-work challenge, which is bot detection rather than a

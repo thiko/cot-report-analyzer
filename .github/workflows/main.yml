@@ -48,13 +48,12 @@ jobs:
           key: cftc-archives-${{ github.run_id }}
           restore-keys: cftc-archives-
 
-      # --no-prices: the price feed refuses GitHub's shared address ranges with
-      # HTTP 429 on every request, so leaving it on cost the run half an hour of
-      # backoff and collected nothing. Prices are refreshed with
-      # `main.py --prices-only` from a host the feed answers, and committed like
-      # any other generated file.
+      # The price feed stays off here. It answers GitHub's shared address ranges
+      # with a standing HTTP 429, which cost the run half an hour of backoff for
+      # nothing. Prices are opt-in via `main.py --prices` or `--prices-only`,
+      # from a host the feed actually answers.
       - name: Build report data
-        run: python main.py --no-prices
+        run: python main.py
 
       - name: Commit refreshed data
         run: |

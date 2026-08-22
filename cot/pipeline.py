@@ -18,15 +18,15 @@ logger = logging.getLogger(__name__)
 
 
 def run(config: Config, report_keys: list[str] | None = None,
-        with_term_structure: bool = False, with_prices: bool = True,
+        with_term_structure: bool = False, with_prices: bool = False,
         download: bool = True, today: date | None = None) -> None:
     """Build every configured report.
 
-    Term structure is off by default: CME Group blocks automated access to its
-    settlement endpoint and returns HTTP 403 with a scraping notice, so the
-    scrape only runs when explicitly asked for.
-
-    Prices are on by default but never fatal — see _update_prices.
+    Both external feeds are off by default and for the same reason: CME Group
+    answers automated settlement requests with HTTP 403 and a scraping notice,
+    and the price feed answers shared address ranges with a standing 429. Each
+    runs only when asked for, and neither can fail the build — see
+    _update_prices.
     """
     today = today or date.today()
     specs = [REPORTS[key] for key in (report_keys or REPORTS)]

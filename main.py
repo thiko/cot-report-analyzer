@@ -18,13 +18,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--term-structure", action="store_true",
                         help="also scrape CME settlements for term structure curves "
                              "(CME blocks automated access, so this usually fails)")
+    parser.add_argument("--prices", action="store_true",
+                        help="also refresh the price feed (off by default: the feed "
+                             "answers shared address ranges with a standing HTTP 429)")
     parser.add_argument("--prices-only", action="store_true",
                         help="only refresh the price feed and rewrite prices.json, "
-                             "leaving the COT data alone (the feed refuses shared CI "
-                             "address ranges, so this can be run from elsewhere)")
-    parser.add_argument("--no-prices", action="store_true",
-                        help="skip the price feed (it is best-effort either way "
-                             "and never fails the build)")
+                             "leaving the COT data alone")
     parser.add_argument("--no-download", action="store_true",
                         help="export from the existing database without fetching data")
     parser.add_argument("-v", "--verbose", action="store_true", help="debug logging")
@@ -47,7 +46,7 @@ def main(argv: list[str] | None = None) -> int:
     run(config,
         report_keys=args.report,
         with_term_structure=args.term_structure,
-        with_prices=not args.no_prices,
+        with_prices=args.prices,
         download=not args.no_download)
     return 0
 
