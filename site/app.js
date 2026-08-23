@@ -392,8 +392,37 @@ function situationMarkup(market, marketIdx, idx, meta) {
     paras.push(verdictHtml(signal));
   }
 
+  const closing = signal ? takeawayHtml(signal) : "";
   return `<div class="tooltip__date">${esc(market.name)} · ${esc(market.symbol)} · ${esc(state.date)}</div>
-    <div class="tooltip__note">${paras.map((t) => `<p>${t}</p>`).join("")}</div>`;
+    <div class="tooltip__note">${paras.map((t) => `<p>${t}</p>`).join("")}${closing}</div>`;
+}
+
+/* The line every card and every ⓘ box ends on: what the positioning would imply
+ * for the price if the extreme unwinds, said plainly enough to be useful to a
+ * reader who opens this a few times a year and does not want to reassemble the
+ * argument from percentiles.
+ *
+ * It is a restatement of the flow, not a forecast — the crowd being long means
+ * an unwind sells — and the tiers behind it only separated 59-66% of the time
+ * in the forward test, which is why every wording stays on "can point to". */
+function takeawayParts(signal) {
+  if (signal.level === 0) {
+    return {
+      tone: "muted",
+      text: t(signal.side !== 0 ? "takeaway.building" : "takeaway.quiet"),
+    };
+  }
+  return {
+    tone: signal.side > 0 ? "down" : "up",
+    text: t(signal.side > 0 ? "takeaway.down" : "takeaway.up")
+        + t(signal.level === 2 ? "takeaway.strong" : "takeaway.weak"),
+  };
+}
+
+function takeawayHtml(signal) {
+  const { tone, text } = takeawayParts(signal);
+  return `<p class="takeaway takeaway--${tone}">`
+    + `<span class="takeaway__label">${esc(t("takeaway.label"))}</span> ${esc(text)}</p>`;
 }
 
 function verdictHtml(signal) {
@@ -585,7 +614,7 @@ function shortlistCard(row) {
   head.append(tier, name, symbol);
 
   // Stated as the flow that an unwind implies, because that is what was
-  // measured. It is not a read on price: no price series enters this build.
+  // measured. The takeaway line below carries that flow through to a direction.
   const pressure = document.createElement("p");
   pressure.className = `card__pressure card__pressure--${row.side > 0 ? "long" : "short"}`;
   pressure.textContent = t(row.side > 0 ? "card.pressureLong" : "card.pressureShort");
@@ -628,6 +657,15 @@ function shortlistCard(row) {
                          { pct: pctFmt.format(Math.abs(row.pctOi)) });
     card.append(warn);
   }
+
+  const { tone, text } = takeawayParts(row.signal);
+  const takeaway = document.createElement("p");
+  takeaway.className = `takeaway takeaway--${tone}`;
+  const label = document.createElement("span");
+  label.className = "takeaway__label";
+  label.textContent = t("takeaway.label");
+  takeaway.append(label, ` ${text}`);
+  card.append(takeaway);
 
   return card;
 }

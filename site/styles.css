@@ -698,6 +698,28 @@ tr.detail-row > td { padding: 0; background: var(--surface-2); }
 
 .card__warn { margin: 7px 0 0; font-size: 11px; line-height: 1.45; color: var(--text-muted); }
 
+/* The closing line of a card or an ⓘ box. Set off by a rule and a heavier
+   label, because it is the one sentence a reader who opens this rarely will
+   actually read. Colour repeats the direction, it never carries it alone. */
+.takeaway {
+  margin: 9px 0 0;
+  padding-top: 7px;
+  border-top: 1px solid var(--border);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.takeaway__label {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.takeaway__label::after { content: ":"; }
+.takeaway--down .takeaway__label { color: var(--neg-500); }
+.takeaway--up .takeaway__label { color: var(--pos-500); }
+.takeaway--muted { color: var(--text-muted); }
+
+.tooltip__note .takeaway { font-size: 12px; }
+
 /* ---------- notes ---------- */
 
 .notes {

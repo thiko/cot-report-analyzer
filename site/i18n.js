@@ -74,8 +74,9 @@ const EN = {
 
   "shortlist.title": "Worth a closer look",
   "shortlist.blurb": "Every report type scanned for this week: positioning at a 52-week extreme"
-    + " with the weekly flow turning against it, ranked. A shortlist for research, not a signal —"
-    + " no price series enters this build, so nothing here is a read on direction.",
+    + " with the weekly flow turning against it, ranked. A shortlist for research, not advice —"
+    + " the direction each card names follows from the positioning alone, no price series enters"
+    + " this build.",
   "shortlist.scanning": "scanning…",
   "shortlist.count": ({ n }) => `${n} market${n === 1 ? "" : "s"}`,
   "shortlist.nothing": "nothing flagged",
@@ -91,6 +92,17 @@ const EN = {
   "card.shareOfOi": "Share of OI",
   "card.concentrated": ({ pct }) => `Position is ${pct}% of open interest. Historically the`
     + " heavily concentrated ones unwound more slowly, not faster.",
+
+  "takeaway.label": "Read as",
+  "takeaway.down": "Can point to a falling price — the crowd is long, and an unwind means them"
+    + " selling. Leaning short, or standing aside from a long, is what this fits.",
+  "takeaway.up": "Can point to a rising price — the crowd is short, and an unwind means them"
+    + " buying. Leaning long, or standing aside from a short, is what this fits.",
+  "takeaway.strong": " The hedgers confirm it, so this is the firmer of the two readings.",
+  "takeaway.weak": " The hedgers do not confirm it, so this is the softer of the two readings.",
+  "takeaway.building": "No directional read yet — the crowd is still adding to the extreme. Wait"
+    + " for the weekly flow to turn before positioning against it.",
+  "takeaway.quiet": "No directional read — positioning is unremarkable this week.",
 
   "summary.noPair": "No speculator/hedger pair is defined for this report, so there is nothing"
     + " to summarise beyond the columns themselves.",
@@ -172,6 +184,11 @@ const EN = {
   "notes.flags4": "An extreme percentile alone is <em>not</em> flagged. It occurs in nearly 40%"
     + " of market-weeks and persists for a median of three, because a trending position sits at"
     + " the edge of its own window by construction.",
+
+  "notes.flags5": "<strong>Read as</strong> closes every card and every <strong>&#x24d8;</strong>"
+    + " box with the direction the positioning would imply if the extreme unwinds. It comes from"
+    + " the flow alone — no price series enters this build — and it is one input among several,"
+    + " not advice.",
 
   "notes.whoTitle": "Who is who",
   "notes.sourceTitle": "Source",
@@ -255,8 +272,8 @@ const DE = {
   "shortlist.title": "Genauer ansehen",
   "shortlist.blurb": "Alle Reporttypen für diese Woche gescannt: Positionierung am"
     + " 52-Wochen-Extrem, bei der der Wochenfluss dagegen dreht, sortiert. Eine Vorauswahl zum"
-    + " Recherchieren, kein Signal — in diesen Build fließt keine Preisreihe ein, nichts hier ist"
-    + " also eine Aussage über die Richtung.",
+    + " Recherchieren, keine Anlageberatung — die Richtung, die jede Kachel nennt, folgt allein"
+    + " aus der Positionierung, in diesen Build fließt keine Preisreihe ein.",
   "shortlist.scanning": "wird gescannt…",
   "shortlist.count": ({ n }) => `${n} ${n === 1 ? "Markt" : "Märkte"}`,
   "shortlist.nothing": "nichts markiert",
@@ -272,6 +289,17 @@ const DE = {
   "card.shareOfOi": "Anteil am OI",
   "card.concentrated": ({ pct }) => `Position entspricht ${pct}% des Open Interest. Historisch`
     + " bauten sich die stark konzentrierten langsamer ab, nicht schneller.",
+
+  "takeaway.label": "Ablesen",
+  "takeaway.down": "Kann auf einen Kursverfall hindeuten — die Menge steht long, ein Abbau heißt,"
+    + " dass sie verkauft. Dazu passt eher die Short-Seite oder der Verzicht auf einen Long-Einstieg.",
+  "takeaway.up": "Kann auf einen Kursanstieg hindeuten — die Menge steht short, ein Abbau heißt,"
+    + " dass sie kauft. Dazu passt eher die Long-Seite oder der Verzicht auf einen Short-Einstieg.",
+  "takeaway.strong": " Die Hedger bestätigen das, die festere der beiden Lesarten.",
+  "takeaway.weak": " Die Hedger bestätigen das nicht, die weichere der beiden Lesarten.",
+  "takeaway.building": "Noch kein Richtungshinweis — die Menge baut das Extrem weiter aus. Erst"
+    + " wenn der Wochenfluss dreht, lohnt eine Gegenposition.",
+  "takeaway.quiet": "Kein Richtungshinweis — die Positionierung ist diese Woche unauffällig.",
 
   "summary.noPair": "Für diesen Report ist kein Spekulanten/Hedger-Paar definiert, es gibt also"
     + " über die Spalten hinaus nichts zusammenzufassen.",
@@ -356,6 +384,11 @@ const DE = {
   "notes.flags4": "Ein Perzentil-Extrem allein wird <em>nicht</em> markiert. Es tritt in fast 40%"
     + " der Marktwochen auf und hält im Median drei Wochen, weil eine trendende Position"
     + " zwangsläufig am Rand ihres eigenen Fensters klebt.",
+
+  "notes.flags5": "<strong>Ablesen</strong> schließt jede Kachel und jede"
+    + " <strong>&#x24d8;</strong>-Box mit der Richtung ab, die sich aus der Positionierung ergäbe,"
+    + " wenn sich das Extrem auflöst. Sie folgt allein aus dem Fluss — in diesen Build fließt keine"
+    + " Preisreihe ein — und ist ein Baustein von mehreren, keine Anlageberatung.",
 
   "notes.whoTitle": "Wer ist wer",
   "notes.sourceTitle": "Quelle",
