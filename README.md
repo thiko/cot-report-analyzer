@@ -4,7 +4,8 @@ Weekly build of the CFTC [Commitments of Traders](https://www.cftc.gov/MarketRep
 data across five report types, published as a static site with the full
 history kept in the repository.
 
-**Site:** GitHub Pages (Settings → Pages → Source: *GitHub Actions*)
+**Site:** <https://thiko.github.io/cot-report-analyzer/>
+Published from Pages with Source set to *GitHub Actions*.
 
 The interface is available in English and German — the picker sits next to the
 theme button. Market names, trader group labels and report names stay in English
