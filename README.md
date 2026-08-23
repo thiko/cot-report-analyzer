@@ -100,17 +100,16 @@ over it, so the same code path serves both.
 
     cp .env.example .env && $EDITOR .env
 
-### GitLab CI
+### The key in CI
 
-Settings → CI/CD → Variables → *Add variable*. Key `ALPHAVANTAGE_API_KEY`, type
-*Variable*, and tick **Masked** so it cannot appear in a job log. **Protected**
-is worth a thought rather than a reflex: it confines the value to protected
-branches and tags, which is right if the weekly job only ever runs on `main`,
-and silently leaves the variable unset on any other branch. Leave *Expand
-variable reference* off — the key is a literal.
+Settings → Secrets and variables → Actions → *New repository secret*. Name it
+`ALPHAVANTAGE_API_KEY` — the workflow reads exactly that name, and so does
+`Config.load`. GitHub masks a secret in job logs on its own.
 
-On GitHub the same value goes in Settings → Secrets and variables → Actions,
-under the same name; the workflow already reads it.
+A repository secret is not available to workflow runs from forked pull
+requests. That is the right default here and costs nothing: the weekly job runs
+on schedule against `main`, and a fork's run simply builds without the Alpha
+Vantage half.
 
 ### Where prices come from
 
