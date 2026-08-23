@@ -76,13 +76,44 @@ as a caution mark instead. And it drops anything under 50,000 contracts of open
 interest, which was the single largest effect measured; those markets are listed
 under the cards rather than silently dropped.
 
-**What it is not.** No price series enters this build, so every number above
-describes how the *position* unwound, not what the market did. The cards and the
-ⓘ boxes close on that measured claim — the position probably unwinds, and a
-crowded long unwinding means selling — and stop there. They deliberately do not
-say the price falls: that step is plausible but untested here, and it is the one
-place where this report could quietly start claiming more than it checked. Treat
-the list as a research queue, not as a signal. Two further caveats worth
+### The price test
+
+The tiers above measure whether the *position* unwound. Whether the price went
+the way that unwinding implies is a different question, and now that a price
+series exists it is a measurable one. Same horizon, same buckets, each market's
+eight-week return normalised by its own weekly volatility, positive when the
+market moved the way a crowded position unwinding would push it:
+
+| Bucket | n | Went that way |
+|---|---|---|
+| *base rate* — any position off its own median | 10797 | 49.8% ±2.7 |
+| extreme percentile only | 3713 | 48.6% ±4.5 |
+| **C** + weekly flow turning | 1008 | 46.7% ±8.7 |
+| **B** C + hedgers at the mirror | 532 | 45.1% ±12.0 |
+| **A** B + open interest rising | 309 | 47.6% ±15.8 |
+
+**Nothing here beats a coin flip, and the better buckets are, if anything,
+slightly worse.** The interval is wide because consecutive observations share
+seven of their eight forward weeks, so the row count is not a count of
+independent trials; every bucket is one standard error from 50%. The honest
+reading is not "the signal is inverted" but "there is no price signal here to
+find". The same caveat applies upward to the position table, whose intervals
+are of the same order — the ladder is monotone across five buckets, which is
+corroborating structure a single number does not have, but 63.3% against 58.0%
+is a smaller finding than it looks.
+
+Two controls. Splitting tier C by source gives 46.5% on the benchmark series
+and 47.0% on the ETF proxies, so this is not an artefact of the proxies. And
+the sign convention was checked both ways: with the yield and reversed-currency
+inversions switched off, or reversed outright, tier C reads 48.4% and 51.1% —
+the orientation moves the number by as much as the "signal" does.
+
+**What this means for the interface.** The cards and ⓘ boxes close on the
+measured claim — the position probably unwinds, and a crowded long unwinding
+means selling — and stop there. That was a caution when the price step was
+merely untested. It is now the finding: positioning extremes say something
+about positions and nothing this data can detect about price. Treat the list as
+a research queue, not as a signal. Two further caveats worth
 keeping in mind: the CFTC publishes Friday for the preceding Tuesday, so the
 freshest row is already three days old on arrival, and an extreme is a condition
 rather than a trigger — it says the fuel is there, not that it has been lit.

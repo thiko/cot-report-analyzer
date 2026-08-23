@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 def run(config: Config, report_keys: list[str] | None = None,
         with_term_structure: bool = False, with_prices: bool = False,
+        force_prices: bool = False,
         download: bool = True, today: date | None = None) -> None:
     """Build every configured report.
 
@@ -41,7 +42,7 @@ def run(config: Config, report_keys: list[str] | None = None,
         if with_term_structure:
             scrape_all(conn)
         if with_prices:
-            _update_prices(conn, config, today)
+            _update_prices(conn, config, today, force=force_prices)
 
         entries = []
         report_dates: set[str] = set()
@@ -61,7 +62,8 @@ def run(config: Config, report_keys: list[str] | None = None,
         conn.close()
 
 
-def run_prices_only(config: Config, today: date | None = None) -> None:
+def run_prices_only(config: Config, today: date | None = None,
+                    force: bool = False) -> None:
     """Refresh prices and rewrite prices.json, leaving the COT data untouched.
 
     Split out because the feed refuses shared CI address ranges outright, which
@@ -81,13 +83,13 @@ def run_prices_only(config: Config, today: date | None = None) -> None:
                     for d in entry.get("dates", [])})
     conn = connect(config.database)
     try:
-        _update_prices(conn, config, today)
+        _update_prices(conn, config, today, force=force)
         write_prices(weekly_closes(conn, dates), dates, config.data_dir)
     finally:
         conn.close()
 
 
-def _update_prices(conn, config: Config, today: date) -> None:
+def _update_prices(conn, config: Config, today: date, force: bool = False) -> None:
     """Refresh the price series, swallowing anything that goes wrong.
 
     The committed COT history is what this build exists to keep current. Prices
@@ -97,7 +99,8 @@ def _update_prices(conn, config: Config, today: date) -> None:
     """
     start = date(today.year - config.history_years + 1, 1, 1)
     try:
-        updated = update_prices(conn, start, today, api_key=config.api_key)
+        updated = update_prices(conn, start, today, api_key=config.api_key,
+                                force=force)
         logger.info("Price series updated for %d markets", updated)
     except Exception:  # noqa: BLE001 - deliberately total
         logger.exception("Price update failed; continuing without fresh prices")

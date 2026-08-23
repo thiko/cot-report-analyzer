@@ -115,6 +115,7 @@ def write_prices(closes: dict[str, list], dates: list[str], data_dir: Path) -> N
                 "provider": sources[symbol].provider,
                 "series": sources[symbol].series,
                 "kind": sources[symbol].kind,
+                "invert": sources[symbol].invert,
             }
             for symbol in closes if symbol in sources
         },

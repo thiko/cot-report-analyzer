@@ -19,11 +19,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                         help="also scrape CME settlements for term structure curves "
                              "(CME blocks automated access, so this usually fails)")
     parser.add_argument("--prices", action="store_true",
-                        help="also refresh the price feed (off by default: the feed "
-                             "answers shared address ranges with a standing HTTP 429)")
+                        help="also refresh the price feed from FRED and Alpha Vantage "
+                             "(a provider that already answered today is skipped)")
     parser.add_argument("--prices-only", action="store_true",
                         help="only refresh the price feed and rewrite prices.json, "
                              "leaving the COT data alone")
+    parser.add_argument("--force-prices", action="store_true",
+                        help="refresh prices even if the provider already answered "
+                             "today (the guard that keeps a same-day rerun from "
+                             "spending the API allowance twice)")
     parser.add_argument("--no-download", action="store_true",
                         help="export from the existing database without fetching data")
     parser.add_argument("-v", "--verbose", action="store_true", help="debug logging")
@@ -40,13 +44,14 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     if args.prices_only:
-        run_prices_only(config)
+        run_prices_only(config, force=args.force_prices)
         return 0
 
     run(config,
         report_keys=args.report,
         with_term_structure=args.term_structure,
         with_prices=args.prices,
+        force_prices=args.force_prices,
         download=not args.no_download)
     return 0
 

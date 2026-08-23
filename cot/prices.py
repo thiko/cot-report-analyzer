@@ -71,6 +71,28 @@ def ensure_table(conn: sqlite3.Connection) -> None:
             PRIMARY KEY (symbol, trade_date)
         )
     """)
+    # When each provider last answered with data. A push during the week
+    # triggers the same build as the Friday schedule, and Alpha Vantage allows
+    # 25 requests a day, so a second run on the same day would spend the
+    # allowance re-fetching series that cannot have changed since the morning.
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS price_fetch (
+            provider TEXT PRIMARY KEY,
+            fetched_on TEXT NOT NULL
+        )
+    """)
+    conn.commit()
+
+
+def last_fetch(conn: sqlite3.Connection, provider: str) -> date | None:
+    row = conn.execute("SELECT fetched_on FROM price_fetch WHERE provider = ?",
+                       (provider,)).fetchone()
+    return date.fromisoformat(row[0]) if row and row[0] else None
+
+
+def record_fetch(conn: sqlite3.Connection, provider: str, when: date) -> None:
+    conn.execute("INSERT OR REPLACE INTO price_fetch (provider, fetched_on) VALUES (?, ?)",
+                 (provider, when.isoformat()))
     conn.commit()
 
 
@@ -198,7 +220,8 @@ def last_stored(conn: sqlite3.Connection, symbol: str) -> date | None:
 
 
 def update_all(conn: sqlite3.Connection, start: date, end: date | None = None,
-               api_key: str | None = None, polite_delay: bool = True) -> int:
+               api_key: str | None = None, polite_delay: bool = True,
+               force: bool = False) -> int:
     """Bring every mapped market's price series up to date.
 
     Returns the number of markets that gained rows. Never raises: a series that
@@ -207,11 +230,24 @@ def update_all(conn: sqlite3.Connection, start: date, end: date | None = None,
     Several markets share a series — the ten-year note and the ultra ten-year
     both settle against DGS10 — so each series is fetched once and written to
     every market that maps to it. That is what keeps the Alpha Vantage half
-    inside the free tier's daily allowance.
+    inside the free tier's allowance.
+
+    A provider that already answered today is skipped, because the build runs
+    on every push as well as on Friday's schedule and neither provider
+    republishes within a day. `force` overrides that for a deliberate refresh.
     """
     ensure_table(conn)
     end = end or date.today()
+    today = date.today()
     sources = price_sources()
+
+    fresh = set()
+    if not force:
+        for provider in {s.provider for s in sources.values()}:
+            if last_fetch(conn, provider) == today:
+                fresh.add(provider)
+                logger.info("%s already fetched today; skipping it. Pass force=True "
+                            "to refresh anyway.", provider)
 
     if not api_key:
         skipped = sum(1 for s in sources.values() if s.provider == "alphavantage")
@@ -227,7 +263,8 @@ def update_all(conn: sqlite3.Connection, start: date, end: date | None = None,
 
     updated = 0
     failures = {"fred": 0, "alphavantage": 0}
-    dead: set[str] = set()
+    dead: set[str] = set(fresh)
+    served: set[str] = set()
     spent = 0
     session = requests.Session()
 
@@ -267,6 +304,7 @@ def update_all(conn: sqlite3.Connection, start: date, end: date | None = None,
             continue
 
         failures[provider] = 0
+        served.add(provider)
         window = [(day, close) for day, close in points if start <= day <= end]
         if not window:
             logger.info("No price data in range for %s (%s)", series, provider)
@@ -282,6 +320,12 @@ def update_all(conn: sqlite3.Connection, start: date, end: date | None = None,
         conn.commit()
         logger.info("Stored %d points from %s (%s) for %s",
                     len(window), series, provider, ", ".join(symbols))
+
+    # Only a provider that actually answered counts as done for the day; one
+    # that was down must be retried on the next run rather than written off
+    # until tomorrow.
+    for provider in served:
+        record_fetch(conn, provider, today)
 
     return updated
 

@@ -15,9 +15,12 @@ and that baseline. Every tier is printed against it.
 from __future__ import annotations
 
 import json
+import math
 import statistics
 from collections import defaultdict
 from pathlib import Path
+
+from cot.markets import price_sources
 
 DATA = Path(__file__).resolve().parent.parent / "data"
 
@@ -50,11 +53,54 @@ def _series(report: str, spec: str, comm: str) -> dict[str, dict[str, list]]:
         for date_idx in range(len(year["dates"])):
             for market_idx, symbol in enumerate(symbols):
                 row = out[symbol]
+                row["date"].append(year["dates"][date_idx])
                 row["oi"].append(year["open_interest"][date_idx][market_idx])
                 for name, group, field in wanted:
                     values = year["groups"][group][field][date_idx]
                     row[name].append(values[market_idx] if values else None)
     return out
+
+
+def _prices() -> dict[str, dict[str, float]]:
+    """symbol -> {report date: close}, empty when no price file has been built.
+
+    Read straight from the exported file rather than the build database: it is
+    already aligned to report dates, and it is the same thing the site sees.
+    """
+    path = DATA / "prices.json"
+    if not path.exists():
+        return {}
+    payload = json.loads(path.read_text())
+    dates = payload["dates"]
+    return {
+        symbol: {day: close for day, close in zip(dates, closes) if close is not None}
+        for symbol, closes in payload.get("closes", {}).items()
+    }
+
+
+def _price_move(series: dict[str, float], history: list[str], i: int,
+                horizon: int, invert: bool) -> float | None:
+    """Eight-week return, in units of that market's own weekly volatility.
+
+    Normalising lets a yield series and an ETF sit in the same column, and
+    `invert` turns a yield or a reversed currency quote back into the direction
+    the contract moves — without it every rates market reads backwards.
+    """
+    here, ahead = series.get(history[i]), series.get(history[i + horizon])
+    if here is None or ahead is None or here <= 0 or ahead <= 0:
+        return None
+
+    window = [series.get(day) for day in history[max(0, i - 51):i + 1]]
+    steps = [math.log(b / a) for a, b in zip(window, window[1:])
+             if a and b and a > 0 and b > 0]
+    if len(steps) < MIN_WINDOW:
+        return None
+    spread = statistics.pstdev(steps)
+    if not spread:
+        return None
+
+    move = math.log(ahead / here) / (spread * math.sqrt(horizon))
+    return -move if invert else move
 
 
 def _deviation(net: list, i: int) -> float | None:
@@ -67,9 +113,13 @@ def _deviation(net: list, i: int) -> float | None:
 
 def observations() -> list[dict]:
     """Every market-week that has both a trailing window and a forward value."""
+    prices = _prices()
+    sources = price_sources()
     rows = []
     for report, (spec, comm) in REPORTS.items():
         for symbol, series in _series(report, spec, comm).items():
+            source = sources.get(symbol)
+            price_series = prices.get(symbol, {})
             for i in range(len(series["net"]) - HORIZON):
                 net = series["net"][i]
                 ahead = series["net"][i + HORIZON]
@@ -87,6 +137,9 @@ def observations() -> list[dict]:
                     "liquid": oi >= MIN_OI,
                     "oi_rising": oi_before is not None and oi > oi_before,
                     "move": (ahead - net) / deviation,
+                    "price_move": _price_move(price_series, series["date"], i,
+                                              HORIZON, source.invert) if source else None,
+                    "price_kind": source.kind if source else None,
                 })
     return rows
 
@@ -102,6 +155,39 @@ def _report(label: str, unwinds: list[float]) -> None:
         return
     share = sum(1 for u in unwinds if u > 0) / len(unwinds)
     print(f"{label:<52} {len(unwinds):>6} {statistics.median(unwinds):>+8.2f} {share:>9.1%}")
+
+
+def _band(n: int) -> float:
+    """Half-width of a 95% interval on a hit rate near a half.
+
+    Consecutive observations share seven of their eight forward weeks, so the
+    row count is not a count of independent trials. Dividing by the horizon is
+    rough but it is the right order, and quoting a rate without it makes a
+    coin flip look like a finding.
+    """
+    effective = max(n / HORIZON, 1)
+    return 1.96 * (0.25 / effective) ** 0.5
+
+
+def _price_rows(rows: list[dict], side_of) -> list[float]:
+    """Positive when the price moved the way an unwind of that side implies:
+    a crowded long unwinding is selling, so the setup wants the price down."""
+    out = []
+    for row in rows:
+        if row["price_move"] is None:
+            continue
+        out.append(-side_of(row) * row["price_move"])
+    return out
+
+
+def _report_price(label: str, rows: list[dict], side_of) -> None:
+    moves = _price_rows(rows, side_of)
+    if not moves:
+        print(f"{label:<52} {0:>6}")
+        return
+    share = sum(1 for m in moves if m > 0) / len(moves)
+    print(f"{label:<52} {len(moves):>6} {statistics.median(moves):>+8.2f} "
+          f"{share:>9.1%} ±{_band(len(moves)):.1%}")
 
 
 def main() -> None:
@@ -142,6 +228,31 @@ def main() -> None:
          [r for r in extremes if not r["liquid"] and r["turning"] and r["mirror"]]),
     ):
         _report(label, [r["unwind"] for r in bucket])
+
+    # The step the interface deliberately does not take. Everything above
+    # measures whether the *position* unwound; this measures whether the price
+    # went the way that unwinding implies. They are not the same question, and
+    # the base rate matters even more here — prices drift, so some hit rate is
+    # available for free.
+    print()
+    print(f"{'price, eight weeks on':<52} {'n':>6} {'median':>8} "
+          f"{'went that way':>14}")
+    _report_price("base rate  liquid, any position off its own median",
+                  [r for r, _ in base], lambda r: 1 if r["p52"] > 50 else -1)
+    for label, bucket in (("liquid, extreme percentile only", liquid),
+                          ("C  liquid + weekly flow turning", tier_c),
+                          ("B  C + hedgers at the mirror extreme", tier_b),
+                          ("A  B + open interest rising", tier_a)):
+        _report_price(label, bucket, lambda r: r["side"])
+
+    # A proxy is an ETF standing in for a contract, with its own fees and roll.
+    # If the result only holds on the proxies it is about the ETFs, not the
+    # positioning, so the two are never pooled into one headline number.
+    print()
+    for kind in ("benchmark", "proxy"):
+        _report_price(f"  tier C, {kind} series only",
+                      [r for r in tier_c if r["price_kind"] == kind],
+                      lambda r: r["side"])
 
     # Extremity is not monotone, which is why the interface treats a percentile
     # as a condition rather than a dial: the top band unwinds less than the one

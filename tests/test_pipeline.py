@@ -133,6 +133,42 @@ def test_every_report_carries_a_german_description():
         assert spec.description_de != spec.description
 
 
+def test_a_provider_that_answered_today_is_not_asked_again(tmp_path, monkeypatch):
+    """The build runs on every push as well as Friday's schedule, and Alpha
+    Vantage allows 25 requests a day. Neither provider republishes within a
+    day, so a second run the same day would spend the allowance for nothing."""
+    conn = sqlite3.connect(tmp_path / "p.db")
+    asked = []
+    monkeypatch.setattr("cot.prices.fetch_series",
+                        lambda source, *a, **k: asked.append(source.series) or
+                        [(date(2026, 1, 5), 1.0)])
+
+    update_all(conn, date(2026, 1, 1), date(2026, 1, 8), api_key="k", polite_delay=False)
+    first = len(asked)
+    assert first
+
+    update_all(conn, date(2026, 1, 1), date(2026, 1, 8), api_key="k", polite_delay=False)
+    assert len(asked) == first, "a provider was re-fetched on the same day"
+
+    update_all(conn, date(2026, 1, 1), date(2026, 1, 8), api_key="k",
+               polite_delay=False, force=True)
+    assert len(asked) > first, "force did not override the guard"
+
+
+def test_a_provider_that_was_down_is_retried_rather_than_written_off(tmp_path, monkeypatch):
+    """Recording a failed run as done would skip it until tomorrow."""
+    conn = sqlite3.connect(tmp_path / "p.db")
+    monkeypatch.setattr("cot.prices.fetch_series", lambda *a, **k: None)
+    update_all(conn, date(2026, 1, 1), date(2026, 1, 8), api_key="k", polite_delay=False)
+
+    asked = []
+    monkeypatch.setattr("cot.prices.fetch_series",
+                        lambda source, *a, **k: asked.append(source.series) or
+                        [(date(2026, 1, 5), 1.0)])
+    update_all(conn, date(2026, 1, 1), date(2026, 1, 8), api_key="k", polite_delay=False)
+    assert asked, "a provider that never answered was treated as fetched"
+
+
 def test_write_index_is_byte_identical_for_the_same_input(tmp_path):
     """The weekly job commits this file and skips the commit when nothing
     changed. A wall-clock field would defeat that guard, so every run would

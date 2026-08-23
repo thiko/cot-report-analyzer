@@ -158,13 +158,14 @@ def category_rank(category: str) -> int:
 # metals — not ones waiting to be filled in.
 @dataclass(frozen=True)
 class PriceSource:
-    provider: str   # "fred" | "alphavantage"
-    series: str     # FRED series id, or an Alpha Vantage ETF ticker
-    kind: str       # "benchmark" | "proxy"
+    provider: str          # "fred" | "alphavantage"
+    series: str            # FRED series id, or an Alpha Vantage ETF ticker
+    kind: str              # "benchmark" | "proxy"
+    invert: bool = False   # series moves opposite to the contract
 
 
-def _fred(series: str, kind: str = "benchmark") -> PriceSource:
-    return PriceSource("fred", series, kind)
+def _fred(series: str, kind: str = "benchmark", invert: bool = False) -> PriceSource:
+    return PriceSource("fred", series, kind, invert)
 
 
 def _av(ticker: str, kind: str = "proxy") -> PriceSource:
@@ -173,14 +174,21 @@ def _av(ticker: str, kind: str = "proxy") -> PriceSource:
 
 PRICE_SOURCES: dict[str, PriceSource] = {
     # Rates — the constant-maturity yield the contract is written against.
-    "ZT": _fred("DGS2"), "ZF": _fred("DGS5"), "ZN": _fred("DGS10"),
-    "TN": _fred("DGS10"), "ZB": _fred("DGS30"), "UB": _fred("DGS30"),
-    "ZQ": _fred("DFF"), "SR1": _fred("SOFR"), "SR3": _fred("SOFR"),
-    # Currencies. FRED quotes some pairs inverted relative to the CME contract;
-    # direction is handled at read time, not here.
-    "6A": _fred("DEXUSAL"), "6B": _fred("DEXUSUK"), "6C": _fred("DEXCAUS"),
-    "6E": _fred("DEXUSEU"), "6J": _fred("DEXJPUS"), "6S": _fred("DEXSZUS"),
-    "6L": _fred("DEXBZUS"), "6M": _fred("DEXMXUS"), "6N": _fred("DEXUSNZ"),
+    # These are yields. A note contract's price moves opposite to its yield, so
+    # a test that reads the series as a price gets every rates market backwards.
+    "ZT": _fred("DGS2", invert=True), "ZF": _fred("DGS5", invert=True),
+    "ZN": _fred("DGS10", invert=True), "TN": _fred("DGS10", invert=True),
+    "ZB": _fred("DGS30", invert=True), "UB": _fred("DGS30", invert=True),
+    "ZQ": _fred("DFF", invert=True), "SR1": _fred("SOFR", invert=True),
+    "SR3": _fred("SOFR", invert=True),
+    # Currencies. FRED names these source-to-target: DEXUSEU is dollars per
+    # euro, which is the way the 6E contract is quoted, but DEXJPUS is yen per
+    # dollar, which is the reverse of 6J. The five reversed ones are marked.
+    "6A": _fred("DEXUSAL"), "6B": _fred("DEXUSUK"), "6E": _fred("DEXUSEU"),
+    "6N": _fred("DEXUSNZ"),
+    "6C": _fred("DEXCAUS", invert=True), "6J": _fred("DEXJPUS", invert=True),
+    "6S": _fred("DEXSZUS", invert=True), "6L": _fred("DEXBZUS", invert=True),
+    "6M": _fred("DEXMXUS", invert=True),
     "DX": _fred("DTWEXBGS", "proxy"),   # broad dollar index, not the ICE basket
     # Equity indices — the index itself for the three FRED carries.
     "ES": _fred("SP500"), "SPX": _fred("SP500"),
