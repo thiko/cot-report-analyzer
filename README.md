@@ -100,13 +100,48 @@ over it, so the same code path serves both.
 
     cp .env.example .env && $EDITOR .env
 
-Alpha Vantage's free tier allows 25 requests a day and asks for no more than one
-a second, which a weekly run fits inside comfortably. Their own commodity
-endpoints are not much use here: `WHEAT`, `CORN`, `COTTON`, `SUGAR`, `COFFEE`,
-`COPPER` and `ALUMINUM` return *monthly* observations whatever `interval` is
-passed, running some weeks behind. Only the energy series are weekly, and FRED
-serves those without a key at all. The usable route for agriculture, softs and
-metals is `TIME_SERIES_WEEKLY` against the sector ETFs.
+### GitLab CI
+
+Settings → CI/CD → Variables → *Add variable*. Key `ALPHAVANTAGE_API_KEY`, type
+*Variable*, and tick **Masked** so it cannot appear in a job log. **Protected**
+is worth a thought rather than a reflex: it confines the value to protected
+branches and tags, which is right if the weekly job only ever runs on `main`,
+and silently leaves the variable unset on any other branch. Leave *Expand
+variable reference* off — the key is a literal.
+
+On GitHub the same value goes in Settings → Secrets and variables → Actions,
+under the same name; the workflow already reads it.
+
+### Where prices come from
+
+| | Markets | Cost |
+|---|---|---|
+| FRED | 31 — rates, exchange rates, equity indices, energy benchmarks, crypto, VIX | no key, no limit |
+| Alpha Vantage | 14 — agriculture, softs, metals, the international index funds | 14 of 25 daily requests |
+| *unmapped* | 25 — dairy, canola, palm oil, ethanol, the fuel-oil crack, specialty metals | no free source |
+
+**One key covers a weekly run with room to spare.** The mapping needs fourteen
+Alpha Vantage requests against an allowance of twenty-five a day, and several
+markets share a series — the ten-year note and the ultra ten-year both settle
+against `DGS10` — so those are fetched once and written to each market that maps
+to them. Rotating keys to widen the allowance would be circumventing it, and is
+not needed: the allowance is already three quarters unused.
+
+Alpha Vantage's own commodity endpoints are not usable here. `WHEAT`, `CORN`,
+`COTTON`, `SUGAR`, `COFFEE`, `COPPER` and `ALUMINUM` return *monthly*
+observations whatever `interval` is passed, running some weeks behind. Only the
+energy series are weekly, and FRED serves those without a key at all. The route
+that works for agriculture, softs and metals is `TIME_SERIES_WEEKLY` against the
+sector ETFs.
+
+**Benchmarks and proxies are labelled, and the difference matters.** A benchmark
+is what the contract is written on — `DGS10` *is* the ten-year yield, `SP500`
+*is* the index the E-mini settles against. A proxy is an ETF standing in for a
+contract it does not track exactly: its own fees, its own roll schedule, and for
+the international funds its own currency exposure all sit between it and the
+futures return. `prices.json` carries `kind` per market for that reason. If the
+forward test is ever rerun against prices, the proxy series are not the
+contract's return and the result has to say so.
 
 ## How the history works
 

@@ -15,10 +15,11 @@ from cot.config import API_KEY_ENV, Config
 from cot.download import normalize_column
 from cot.export import report_index_entry, write_index, write_report_years
 from cot.markets import (COMMODITY_MARKETS, FINANCIAL_MARKETS,
-                         PRICE_SYMBOL_OVERRIDES, price_targets)
+                         PRICE_SOURCES, price_sources)
 from cot.metrics import _rolling_percentile, enrich
-from cot.prices import (MAX_CONSECUTIVE_FAILURES, _as_of, parse_series,
-                        update_all, weekly_closes)
+from cot.prices import (ALPHAVANTAGE_DAILY_BUDGET, MAX_CONSECUTIVE_FAILURES,
+                        _as_of, parse_alphavantage,
+                        parse_fred_csv, update_all, weekly_closes)
 from cot.prices import ensure_table as ensure_prices_table
 from cot.reports import REPORTS
 from cot.store import ensure_table, ingest_file, read_report
@@ -132,43 +133,101 @@ def test_every_report_carries_a_german_description():
         assert spec.description_de != spec.description
 
 
-def test_price_targets_are_unique_and_non_empty():
-    targets = price_targets()
-    assert targets, "no market maps to a price ticker"
-    assert all(ticker for ticker in targets.values())
-    assert len(set(targets.values())) == len(targets)
-    # Markets explicitly marked as having no comparable series stay out.
-    for symbol, ticker in PRICE_SYMBOL_OVERRIDES.items():
-        if ticker is None:
-            assert symbol not in targets
+def test_every_price_source_is_complete_and_maps_to_a_real_market():
+    sources = price_sources()
+    assert sources, "no market maps to a price source"
+    known = set(COMMODITY_MARKETS) | set(FINANCIAL_MARKETS)
+    symbols = {m.symbol for m in list(COMMODITY_MARKETS.values())
+               + list(FINANCIAL_MARKETS.values())}
+    assert known  # guard the fixture itself
+    for symbol, source in sources.items():
+        assert symbol in symbols, f"{symbol} maps to no market"
+        assert source.provider in {"fred", "alphavantage"}
+        assert source.series
+        assert source.kind in {"benchmark", "proxy"}
+    # A typo in PRICE_SOURCES would silently drop a market rather than fail.
+    assert set(PRICE_SOURCES) - symbols == set()
 
 
-def test_parse_series_uses_the_exchange_offset_and_skips_gaps():
-    # 2026-01-05 23:00 UTC, which is 2026-01-06 at a +7200s exchange.
-    payload = {"chart": {"result": [{
-        "timestamp": [1767654000, 1767740400, 1767826800],
-        "meta": {"gmtoffset": 7200},
-        "indicators": {"quote": [{"close": [10.0, None, 12.5]}]},
-    }]}}
-    points = parse_series(payload)
-    assert [p[1] for p in points] == [10.0, 12.5]
-    assert points[0][0] == date(2026, 1, 6)
+def test_the_alpha_vantage_half_fits_inside_the_free_daily_allowance():
+    """Several markets share a series, so the request count is what matters."""
+    calls = {s.series for s in price_sources().values() if s.provider == "alphavantage"}
+    assert len(calls) <= ALPHAVANTAGE_DAILY_BUDGET
+
+
+def test_parse_fred_csv_skips_the_placeholder_for_a_missing_observation():
+    text = ("observation_date,DGS10\n"
+            "2026-01-05,4.10\n"
+            "2026-01-06,.\n"
+            "2026-01-07,4.25\n")
+    assert parse_fred_csv(text) == [(date(2026, 1, 5), 4.10), (date(2026, 1, 7), 4.25)]
+
+
+@pytest.mark.parametrize("text", ["", "observation_date,X\n", "garbage\n1,2,3\n"])
+def test_parse_fred_csv_survives_a_reshaped_body(text):
+    assert parse_fred_csv(text) == []
+
+
+def test_parse_alphavantage_reads_the_weekly_closes():
+    payload = {"Weekly Time Series": {
+        "2026-01-09": {"4. close": "19.01"},
+        "2026-01-02": {"4. close": "18.50"},
+    }}
+    assert parse_alphavantage(payload) == [(date(2026, 1, 2), 18.50),
+                                           (date(2026, 1, 9), 19.01)]
 
 
 @pytest.mark.parametrize("payload", [
-    {}, {"chart": {}}, {"chart": {"result": []}},
-    {"chart": {"result": [{"timestamp": [], "indicators": {}}]}},
+    {"Note": "call frequency"}, {"Information": "premium endpoint"},
+    {"Error Message": "bad symbol"}, {},
 ])
-def test_parse_series_survives_a_reshaped_response(payload):
-    assert parse_series(payload) == []
+def test_a_throttle_notice_is_not_an_empty_series(payload):
+    """None means stop asking; [] would read as a symbol with no data."""
+    assert parse_alphavantage(payload) is None
+
+
+def test_without_a_key_the_fred_half_still_runs(tmp_path, monkeypatch):
+    conn = sqlite3.connect(tmp_path / "p.db")
+    asked = []
+
+    def record(source, api_key=None, session=None):
+        asked.append(source.provider)
+        return [(date(2026, 1, 5), 1.0)]
+
+    monkeypatch.setattr("cot.prices.fetch_series", record)
+    update_all(conn, date(2026, 1, 1), date(2026, 1, 8), api_key=None, polite_delay=False)
+    assert asked and set(asked) == {"fred"}
+
+
+def test_markets_sharing_a_series_are_filled_from_one_request(tmp_path, monkeypatch):
+    """ZN and TN both settle against DGS10; asking twice would waste the budget."""
+    conn = sqlite3.connect(tmp_path / "p.db")
+    asked = []
+
+    def record(source, api_key=None, session=None):
+        asked.append(source.series)
+        return [(date(2026, 1, 5), 4.1)]
+
+    monkeypatch.setattr("cot.prices.fetch_series", record)
+    update_all(conn, date(2026, 1, 1), date(2026, 1, 8), api_key="k", polite_delay=False)
+    assert len(asked) == len(set(asked)), "a series was fetched more than once"
+    stored = {row[0] for row in conn.execute("SELECT DISTINCT symbol FROM prices")}
+    assert {"ZN", "TN"} <= stored
 
 
 def test_as_of_carries_a_close_forward_but_not_indefinitely():
+    """The window is a fortnight: the Alpha Vantage series are weekly, so a
+    single missed week must still carry, while a series that stopped goes
+    empty rather than drawing a flat line where there is no data."""
     points = [("2026-01-05", 10.0), ("2026-01-06", 11.0), ("2026-01-20", 12.0)]
-    dates = ["2026-01-05", "2026-01-07", "2026-01-13", "2026-01-19", "2026-01-20", "2026-02-10"]
-    # A holiday takes the previous close; a series that stopped goes empty
-    # rather than drawing a flat line where there is no data.
-    assert _as_of(points, dates) == [10.0, 11.0, 11.0, None, 12.0, None]
+    dates = ["2026-01-05", "2026-01-07", "2026-01-19", "2026-01-20", "2026-02-10"]
+    assert _as_of(points, dates) == [10.0, 11.0, 11.0, 12.0, None]
+
+
+def test_a_weekly_series_survives_one_missed_week():
+    points = [("2026-01-02", 10.0)]
+    assert _as_of(points, ["2026-01-09", "2026-01-16"]) == [10.0, 10.0]
+    assert _as_of(points, ["2026-01-23"]) == [None]
 
 
 def test_weekly_closes_ignores_a_series_that_is_too_short(tmp_path):
@@ -213,18 +272,18 @@ def test_update_all_gives_up_once_the_feed_stops_answering(tmp_path, monkeypatch
     assert len(attempts) == MAX_CONSECUTIVE_FAILURES
 
 
-def test_a_symbol_without_data_does_not_trip_the_breaker(tmp_path, monkeypatch):
-    """An empty answer is a delisted contract, not a wall — the run carries on."""
+def test_a_series_without_data_does_not_trip_the_breaker(tmp_path, monkeypatch):
+    """An empty answer is a dead series, not a wall — the run carries on."""
     conn = sqlite3.connect(tmp_path / "p.db")
     seen = []
 
-    def empty(ticker, *args, **kwargs):
-        seen.append(ticker)
+    def empty(source, *args, **kwargs):
+        seen.append(source.series)
         return []
 
     monkeypatch.setattr("cot.prices.fetch_series", empty)
-    update_all(conn, date(2026, 1, 1), date(2026, 1, 8), polite_delay=False)
-    assert len(seen) == len(price_targets())
+    update_all(conn, date(2026, 1, 1), date(2026, 1, 8), api_key="k", polite_delay=False)
+    assert len(seen) == len({s.series for s in price_sources().values()})
 
 
 def _write_ini(directory: Path, extra: str = "") -> Path:

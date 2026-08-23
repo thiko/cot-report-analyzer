@@ -48,12 +48,12 @@ jobs:
           key: cftc-archives-${{ github.run_id }}
           restore-keys: cftc-archives-
 
-      # The price feed stays off here. It answers GitHub's shared address ranges
-      # with a standing HTTP 429, which cost the run half an hour of backoff for
-      # nothing. Prices are opt-in via `main.py --prices` or `--prices-only`,
-      # from a host the feed actually answers.
+      # Prices run here now. The feed that answered GitHub's shared address
+      # ranges with a standing 429 is gone; FRED needs no key and no quota, and
+      # the Alpha Vantage half degrades to skipped rather than failing the run
+      # when the key is absent or the daily allowance is spent.
       - name: Build report data
-        run: python main.py
+        run: python main.py --prices
         env:
           # Repository secret, never a literal here: workflow files are public
           # in a public repo. Absent, the price feed is skipped rather than

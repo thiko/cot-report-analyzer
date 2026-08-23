@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from cot.markets import category_rank
+from cot.markets import category_rank, price_sources
 from cot.metrics import GAP_KEY, WINDOWS, gap_pair, metric_groups
 from cot.reports import ReportSpec
 
@@ -97,11 +97,28 @@ def _matrix(frame: pd.DataFrame, column: str, dates: list[str],
 
 def write_prices(closes: dict[str, list], dates: list[str], data_dir: Path) -> None:
     """Close per market as of every report date, in the same columnar shape as
-    the report files: one date list, one row of closes per market."""
+    the report files: one date list, one row of closes per market.
+
+    Each series carries where it came from and whether it is the benchmark the
+    contract settles against or an ETF standing in for it. A proxy has its own
+    fees, roll schedule and — for the international funds — currency exposure,
+    so a return computed off it is not the contract's return. Shipping that
+    unlabelled is what would mislead; shipping the label lets the interface say
+    so.
+    """
+    sources = price_sources()
     _write_json(data_dir / "prices.json", {
         "schema": SCHEMA_VERSION,
         "dates": dates,
         "closes": closes,
+        "sources": {
+            symbol: {
+                "provider": sources[symbol].provider,
+                "series": sources[symbol].series,
+                "kind": sources[symbol].kind,
+            }
+            for symbol in closes if symbol in sources
+        },
     })
 
 

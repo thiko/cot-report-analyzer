@@ -10,7 +10,7 @@ basis swaps, power hubs) out of the report by construction.
 structure. None means no term structure is available for that market.
 
 Price tickers are derived rather than stored per market: see
-PRICE_SYMBOL_OVERRIDES below.
+PRICE_SOURCES below.
 """
 
 from dataclasses import dataclass
@@ -134,46 +134,77 @@ def category_rank(category: str) -> int:
         return len(CATEGORY_ORDER)
 
 
-# On the price feed a continuous futures ticker is the COT symbol with an "=F"
-# suffix, which holds for 53 of the 70 markets. Only the exceptions are listed
-# here: an explicit ticker where the pattern breaks, or None where no comparable
-# series exists at all.
+# Where each market's price series comes from.
 #
-# The None entries are deliberate rather than pending. ETF proxies do exist for
-# the MSCI pair and the commodity index, but an ETF tracks something different
-# enough from the contract — fees, currency hedging, its own roll schedule —
-# that a return computed off it would not be the contract's return, and a
-# quietly substituted series is worse than an absent one.
-PRICE_SYMBOL_OVERRIDES: dict[str, str | None] = {
-    "SPX": "^GSPC",       # consolidated S&P contract, quoted against the index
-    "NDX": "^NDX",
-    "VX": "^VIX",
-    "DX": "DX-Y.NYB",     # the ICE index itself, not a futures chain
-    "MW": None,           # Minneapolis spring wheat
-    "RS": None,           # canola
-    "PO": None,           # palm oil
-    "CBQ": None,          # butter
-    "DCQ": None,          # class III milk
-    "EH": None,           # ethanol
-    "FOC": None,          # Gulf #6 fuel oil crack
-    "SR3": None,          # SOFR futures
-    "SR1": None,
-    "MME": None,          # MSCI emerging markets
-    "MFS": None,          # MSCI EAFE
-    "AW": None,           # Bloomberg commodity index
-    "LTH": None,          # lithium hydroxide — ticker resolves, history does not
+# Two providers, split by what they can actually deliver. FRED serves rates,
+# exchange rates, the equity indices, the energy benchmarks, crypto and the VIX
+# daily, with no key and no request limit. Alpha Vantage covers what FRED has
+# only monthly — agriculture, softs and metals — through weekly ETF closes; its
+# own commodity endpoints return one point a month whatever interval is asked
+# for, which is useless against a weekly report.
+#
+# `kind` is the honest part. A benchmark is the thing the contract is written
+# on: DGS10 *is* the ten-year yield, SP500 *is* the index the E-mini settles
+# against. A proxy is an ETF standing in for a contract it does not track
+# exactly — its own fees, roll schedule and, for the international funds,
+# currency exposure all sit between it and the futures return. Earlier this
+# file refused proxies outright on those grounds. That was right about the
+# distortion and wrong about the remedy: a labelled proxy is worth more than a
+# blank column, and an unlabelled one is what actually misleads. So they are
+# carried, and every consumer is told which is which.
+#
+# A market with no entry has no series. Those are contracts with no free source
+# at all — dairy, canola, palm oil, ethanol, the fuel-oil crack, the specialty
+# metals — not ones waiting to be filled in.
+@dataclass(frozen=True)
+class PriceSource:
+    provider: str   # "fred" | "alphavantage"
+    series: str     # FRED series id, or an Alpha Vantage ETF ticker
+    kind: str       # "benchmark" | "proxy"
+
+
+def _fred(series: str, kind: str = "benchmark") -> PriceSource:
+    return PriceSource("fred", series, kind)
+
+
+def _av(ticker: str, kind: str = "proxy") -> PriceSource:
+    return PriceSource("alphavantage", ticker, kind)
+
+
+PRICE_SOURCES: dict[str, PriceSource] = {
+    # Rates — the constant-maturity yield the contract is written against.
+    "ZT": _fred("DGS2"), "ZF": _fred("DGS5"), "ZN": _fred("DGS10"),
+    "TN": _fred("DGS10"), "ZB": _fred("DGS30"), "UB": _fred("DGS30"),
+    "ZQ": _fred("DFF"), "SR1": _fred("SOFR"), "SR3": _fred("SOFR"),
+    # Currencies. FRED quotes some pairs inverted relative to the CME contract;
+    # direction is handled at read time, not here.
+    "6A": _fred("DEXUSAL"), "6B": _fred("DEXUSUK"), "6C": _fred("DEXCAUS"),
+    "6E": _fred("DEXUSEU"), "6J": _fred("DEXJPUS"), "6S": _fred("DEXSZUS"),
+    "6L": _fred("DEXBZUS"), "6M": _fred("DEXMXUS"), "6N": _fred("DEXUSNZ"),
+    "DX": _fred("DTWEXBGS", "proxy"),   # broad dollar index, not the ICE basket
+    # Equity indices — the index itself for the three FRED carries.
+    "ES": _fred("SP500"), "SPX": _fred("SP500"),
+    "NQ": _fred("NASDAQ100"), "NDX": _fred("NASDAQ100"),
+    "YM": _fred("DJIA"),
+    "RTY": _av("IWM"), "MFS": _av("EFA"), "MME": _av("EEM"), "NKD": _av("EWJ"),
+    # Energy — the spot benchmarks the contracts settle around.
+    "CL": _fred("DCOILWTICO"), "BZ": _fred("DCOILBRENTEU"),
+    "NG": _fred("DHHNGSP"), "RB": _fred("DGASNYH"),
+    # Crypto and volatility.
+    "BTC": _fred("CBBTCUSD"), "ETH": _fred("CBETHUSD"), "VX": _fred("VIXCLS"),
+    # Grains, softs, metals — ETF proxies, the only weekly free series going.
+    "ZC": _av("CORN"), "ZW": _av("WEAT"), "ZS": _av("SOYB"), "SB": _av("CANE"),
+    "GC": _av("GLD"), "SI": _av("SLV"), "HG": _av("CPER"),
+    "PL": _av("PPLT"), "PA": _av("PALL"), "AW": _av("DBC"),
 }
 
 
-def price_targets() -> dict[str, str]:
-    """Market symbol -> price feed ticker, for every market that has one."""
-    targets = {}
-    for universe in UNIVERSES.values():
-        for market in universe.values():
-            ticker = PRICE_SYMBOL_OVERRIDES.get(market.symbol, f"{market.symbol}=F")
-            if ticker:
-                targets[market.symbol] = ticker
-    return targets
+def price_sources() -> dict[str, PriceSource]:
+    """Market symbol -> price source, for every market that has one."""
+    known = {market.symbol for universe in UNIVERSES.values()
+             for market in universe.values()}
+    return {symbol: source for symbol, source in PRICE_SOURCES.items()
+            if symbol in known}
 
 
 def term_structure_targets() -> dict[str, str]:

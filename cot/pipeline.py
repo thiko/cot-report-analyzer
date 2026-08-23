@@ -97,7 +97,7 @@ def _update_prices(conn, config: Config, today: date) -> None:
     """
     start = date(today.year - config.history_years + 1, 1, 1)
     try:
-        updated = update_prices(conn, start, today)
+        updated = update_prices(conn, start, today, api_key=config.api_key)
         logger.info("Price series updated for %d markets", updated)
     except Exception:  # noqa: BLE001 - deliberately total
         logger.exception("Price update failed; continuing without fresh prices")
