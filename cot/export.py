@@ -11,7 +11,6 @@ feed the site's charts directly.
 
 import json
 import logging
-from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
@@ -128,10 +127,19 @@ def write_term_structure(curves: dict, data_dir: Path) -> None:
 
 
 def write_index(entries: list[dict], data_dir: Path) -> None:
+    """The site's entry point: which reports exist and how current they are.
+
+    Deliberately free of a build timestamp. The weekly job commits this file,
+    and a wall-clock field would change on every run, so a week where the CFTC
+    published nothing still produced a commit — three in a row said "through
+    2026-08-18" over identical data. Worse, it guaranteed that two runs always
+    had something to disagree about. When the build ran is already recorded,
+    exactly and immutably, by the commit itself; what belongs in the data is
+    how current the *data* is, which is latest_date.
+    """
     latest = max((e["latest_date"] for e in entries if e.get("latest_date")), default=None)
     _write_json(data_dir / "index.json", {
         "schema": SCHEMA_VERSION,
-        "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "latest_date": latest,
         "reports": entries,
     })

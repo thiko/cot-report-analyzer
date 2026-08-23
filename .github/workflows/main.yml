@@ -60,18 +60,36 @@ jobs:
           # failing the run, the same way it behaves with no network.
           ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }}
 
+      # data/ is generated output, not a contribution to be merged: whatever
+      # this run produced is the answer, and there is no second version of it
+      # to reconcile. Rebasing said otherwise, and rebasing a commit that
+      # rewrites minified single-line JSON onto one that did the same conflicts
+      # every time — the files are one line each, so any difference is a
+      # whole-line collision git cannot resolve. A re-run hit this reliably:
+      # actions/checkout starts a re-run from the original trigger's SHA, so
+      # origin has usually moved on. Rebuilding the commit on the current tip
+      # instead cannot conflict, and a rejected push just tries again.
       - name: Commit refreshed data
         run: |
-          if [ -z "$(git status --porcelain data)" ]; then
-            echo "No data changes."
-            exit 0
-          fi
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data
-          git commit -m "data: COT report through $(python -c "import json;print(json.load(open('data/index.json'))['latest_date'])")"
-          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+          for attempt in 1 2 3; do
+            git fetch origin "${GITHUB_REF_NAME}"
+            git reset --mixed "origin/${GITHUB_REF_NAME}"
+            git add -A data
+            if git diff --cached --quiet; then
+              echo "No data changes."
+              exit 0
+            fi
+            git commit -m "data: COT report through $(python -c "import json;print(json.load(open('data/index.json'))['latest_date'])")"
+            if git push origin "HEAD:${GITHUB_REF_NAME}"; then
+              exit 0
+            fi
+            echo "Push rejected on attempt ${attempt}; rebuilding on the new tip."
+          done
+          echo "Could not push after 3 attempts."
+          exit 1
 
       - name: Assemble site
         run: |

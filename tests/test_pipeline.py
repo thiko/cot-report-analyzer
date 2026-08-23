@@ -133,6 +133,18 @@ def test_every_report_carries_a_german_description():
         assert spec.description_de != spec.description
 
 
+def test_write_index_is_byte_identical_for_the_same_input(tmp_path):
+    """The weekly job commits this file and skips the commit when nothing
+    changed. A wall-clock field would defeat that guard, so every run would
+    push and two runs would always have something to disagree about."""
+    entries = [{"key": "legacy_fut", "latest_date": "2026-08-18"}]
+    write_index(entries, tmp_path)
+    first = (tmp_path / "index.json").read_bytes()
+    write_index(entries, tmp_path)
+    assert (tmp_path / "index.json").read_bytes() == first
+    assert b"generated_at" not in first
+
+
 def test_every_price_source_is_complete_and_maps_to_a_real_market():
     sources = price_sources()
     assert sources, "no market maps to a price source"
