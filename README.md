@@ -87,6 +87,27 @@ keeping in mind: the CFTC publishes Friday for the preceding Tuesday, so the
 freshest row is already three days old on arrival, and an extreme is a condition
 rather than a trigger — it says the fuel is there, not that it has been lit.
 
+## Configuration and the API key
+
+`config.ini` holds the non-secret settings and is committed. The Alpha Vantage
+key is not among them: `Config.load` refuses to start if it finds one there,
+because a key in that file would be published on the next weekly data push.
+
+The key is read from `$ALPHAVANTAGE_API_KEY` only. In CI that is a repository
+secret injected into the build step. Locally, copy `.env.example` to `.env` and
+fill it in — `.env` is gitignored, and a real environment variable always wins
+over it, so the same code path serves both.
+
+    cp .env.example .env && $EDITOR .env
+
+Alpha Vantage's free tier allows 25 requests a day and asks for no more than one
+a second, which a weekly run fits inside comfortably. Their own commodity
+endpoints are not much use here: `WHEAT`, `CORN`, `COTTON`, `SUGAR`, `COFFEE`,
+`COPPER` and `ALUMINUM` return *monthly* observations whatever `interval` is
+passed, running some weeks behind. Only the energy series are weekly, and FRED
+serves those without a key at all. The usable route for agriculture, softs and
+metals is `TIME_SERIES_WEEKLY` against the sector ETFs.
+
 ## How the history works
 
 The pipeline writes `data/<report>/<year>.json` and commits it. Only the current

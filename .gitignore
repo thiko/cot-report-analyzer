@@ -10,3 +10,7 @@ venv/
 # Everything the site needs is exported to data/ and committed.
 outputs/
 _site/
+
+# Local secrets. The API key belongs in the environment, never in config.ini,
+# which is committed. See .env.example.
+.env

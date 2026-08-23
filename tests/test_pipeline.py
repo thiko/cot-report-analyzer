@@ -11,6 +11,7 @@ import pandas as pd
 import pytest
 import requests
 
+from cot.config import API_KEY_ENV, Config
 from cot.download import normalize_column
 from cot.export import report_index_entry, write_index, write_report_years
 from cot.markets import (COMMODITY_MARKETS, FINANCIAL_MARKETS,
@@ -224,3 +225,41 @@ def test_a_symbol_without_data_does_not_trip_the_breaker(tmp_path, monkeypatch):
     monkeypatch.setattr("cot.prices.fetch_series", empty)
     update_all(conn, date(2026, 1, 1), date(2026, 1, 8), polite_delay=False)
     assert len(seen) == len(price_targets())
+
+
+def _write_ini(directory: Path, extra: str = "") -> Path:
+    path = directory / "config.ini"
+    path.write_text(f"[app]\ncache_directory = {directory}/tmp\n{extra}")
+    return path
+
+
+def test_the_api_key_comes_from_the_environment(tmp_path, monkeypatch):
+    monkeypatch.setenv(API_KEY_ENV, "from-env")
+    assert Config.load(_write_ini(tmp_path)).api_key == "from-env"
+
+
+def test_a_missing_api_key_is_none_rather_than_empty(tmp_path, monkeypatch):
+    """So a caller can test truthiness and skip the feed instead of sending ''."""
+    monkeypatch.delenv(API_KEY_ENV, raising=False)
+    assert Config.load(_write_ini(tmp_path)).api_key is None
+
+
+def test_a_dotenv_file_supplies_the_key_for_local_runs(tmp_path, monkeypatch):
+    monkeypatch.delenv(API_KEY_ENV, raising=False)
+    (tmp_path / ".env").write_text(f'# comment\n\n{API_KEY_ENV}="from-dotenv"\n')
+    assert Config.load(_write_ini(tmp_path)).api_key == "from-dotenv"
+
+
+def test_a_real_environment_variable_beats_dotenv(tmp_path, monkeypatch):
+    """CI sets the secret; a .env checked out by accident must not shadow it."""
+    monkeypatch.setenv(API_KEY_ENV, "from-env")
+    (tmp_path / ".env").write_text(f"{API_KEY_ENV}=from-dotenv\n")
+    assert Config.load(_write_ini(tmp_path)).api_key == "from-env"
+
+
+def test_a_key_in_config_ini_is_refused(tmp_path, monkeypatch):
+    """config.ini is committed, so a key there would ship on the next data push."""
+    monkeypatch.setenv(API_KEY_ENV, "from-env")
+    path = _write_ini(tmp_path, "alphavantage_api_key = leaked\n")
+    with pytest.raises(ValueError, match="committed"):
+        Config.load(path)
