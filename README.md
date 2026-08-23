@@ -46,11 +46,26 @@ units of its own 52-week standard deviation:
 
 | Bucket | n | Median unwind | Unwound |
 |---|---|---|---|
-| liquid, extreme percentile only | 6201 | +0.37 | 61.1% |
-| **C** liquid + weekly flow turning | 1617 | +0.45 | 63.0% |
-| **B** C + hedgers at the mirror extreme | 987 | +0.56 | 64.2% |
-| **A** B + open interest rising | 564 | +0.57 | 66.5% |
-| *excluded* illiquid + turning + mirror | 437 | +0.26 | 57.2% |
+| *base rate* — liquid, any position off its own median | 16098 | +0.24 | 58.0% |
+| liquid, extreme percentile only | 5903 | +0.38 | 61.5% |
+| **C** liquid + weekly flow turning | 1621 | +0.46 | 63.3% |
+| **B** C + hedgers at the mirror extreme | 982 | +0.53 | 64.3% |
+| **A** B + open interest rising | 574 | +0.53 | 65.7% |
+| *excluded* illiquid + turning + mirror | 425 | +0.22 | 56.9% |
+
+Reproduce with `python -m cot.forward_test`, which is where these come from.
+
+**Read the first row before the others.** Positions mean-revert over eight weeks
+whether or not anything is flagged, so 58% is what doing nothing already gets
+you. The full A stack is worth about eight points over that, and C about five —
+real, but a good deal less than "66%" sounds on its own. Every rate the interface
+quotes is shown against this baseline for that reason.
+
+Extremity is also not monotone. Sorted by distance from a market's own 52-week
+median, the unwind rate peaks in the 90th-95th percentile band (64.5%) and *falls*
+past the 95th (61.4%); a position pinned at the very edge of its window unwound
+57.3% of the time, which is the base rate. A reading that extreme usually means a
+trend is running, and trends persist.
 
 Three things this deliberately does not do. It does not flag an extreme on its
 own: that occurs in roughly 38% of market-weeks and persists for a median of
@@ -62,9 +77,12 @@ interest, which was the single largest effect measured; those markets are listed
 under the cards rather than silently dropped.
 
 **What it is not.** No price series enters this build, so every number above
-describes how the *position* unwound, not what the market did. The cards say
-which flow an unwind implies — crowded longs have to sell — and stop there.
-Treat the list as a research queue, not as a signal. Two further caveats worth
+describes how the *position* unwound, not what the market did. The cards and the
+ⓘ boxes close on that measured claim — the position probably unwinds, and a
+crowded long unwinding means selling — and stop there. They deliberately do not
+say the price falls: that step is plausible but untested here, and it is the one
+place where this report could quietly start claiming more than it checked. Treat
+the list as a research queue, not as a signal. Two further caveats worth
 keeping in mind: the CFTC publishes Friday for the preceding Tuesday, so the
 freshest row is already three days old on arrival, and an extreme is a condition
 rather than a trigger — it says the fuel is there, not that it has been lit.

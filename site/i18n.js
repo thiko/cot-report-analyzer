@@ -94,15 +94,15 @@ const EN = {
     + " heavily concentrated ones unwound more slowly, not faster.",
 
   "takeaway.label": "Read as",
-  "takeaway.down": "Can point to a falling price — the crowd is long, and an unwind means them"
-    + " selling. Leaning short, or standing aside from a long, is what this fits.",
-  "takeaway.up": "Can point to a rising price — the crowd is short, and an unwind means them"
-    + " buying. Leaning long, or standing aside from a short, is what this fits.",
-  "takeaway.strong": " The hedgers confirm it, so this is the firmer of the two readings.",
-  "takeaway.weak": " The hedgers do not confirm it, so this is the softer of the two readings.",
-  "takeaway.building": "No directional read yet — the crowd is still adding to the extreme. Wait"
-    + " for the weekly flow to turn before positioning against it.",
-  "takeaway.quiet": "No directional read — positioning is unremarkable this week.",
+  "takeaway.down": ({ rate, base }) => "The crowded long probably unwinds, which means them"
+    + ` selling — ${rate}% of comparable weeks did within eight weeks, against ${base}% for any`
+    + " position at all. Leaning short, or standing aside from a long, is what this fits.",
+  "takeaway.up": ({ rate, base }) => "The crowded short probably unwinds, which means them"
+    + ` buying — ${rate}% of comparable weeks did within eight weeks, against ${base}% for any`
+    + " position at all. Leaning long, or standing aside from a short, is what this fits.",
+  "takeaway.building": "No unwind indicated yet — the crowd is still adding to the extreme. The"
+    + " setup is only measurable once the weekly flow turns.",
+  "takeaway.quiet": "Nothing indicated — positioning is unremarkable this week.",
 
   "summary.noPair": "No speculator/hedger pair is defined for this report, so there is nothing"
     + " to summarise beyond the columns themselves.",
@@ -186,9 +186,12 @@ const EN = {
     + " the edge of its own window by construction.",
 
   "notes.flags5": "<strong>Read as</strong> closes every card and every <strong>&#x24d8;</strong>"
-    + " box with the direction the positioning would imply if the extreme unwinds. It comes from"
-    + " the flow alone — no price series enters this build — and it is one input among several,"
-    + " not advice.",
+    + " box with the thing the forward test actually measured — whether the position unwinds —"
+    + " and the flow that implies. It stops there on purpose: no price series enters this build,"
+    + " so whether the market follows the flow is untested here.",
+  "notes.flags6": ({ base }) => "Every rate is quoted against its base rate: any liquid position"
+    + ` away from its own median unwound ${base}% of the time over the same eight weeks. A 64%`
+    + " bucket is that much better than doing nothing, not 64% right.",
 
   "notes.whoTitle": "Who is who",
   "notes.sourceTitle": "Source",
@@ -291,15 +294,17 @@ const DE = {
     + " bauten sich die stark konzentrierten langsamer ab, nicht schneller.",
 
   "takeaway.label": "Ablesen",
-  "takeaway.down": "Kann auf einen Kursverfall hindeuten — die Menge steht long, ein Abbau heißt,"
-    + " dass sie verkauft. Dazu passt eher die Short-Seite oder der Verzicht auf einen Long-Einstieg.",
-  "takeaway.up": "Kann auf einen Kursanstieg hindeuten — die Menge steht short, ein Abbau heißt,"
-    + " dass sie kauft. Dazu passt eher die Long-Seite oder der Verzicht auf einen Short-Einstieg.",
-  "takeaway.strong": " Die Hedger bestätigen das, die festere der beiden Lesarten.",
-  "takeaway.weak": " Die Hedger bestätigen das nicht, die weichere der beiden Lesarten.",
-  "takeaway.building": "Noch kein Richtungshinweis — die Menge baut das Extrem weiter aus. Erst"
-    + " wenn der Wochenfluss dreht, lohnt eine Gegenposition.",
-  "takeaway.quiet": "Kein Richtungshinweis — die Positionierung ist diese Woche unauffällig.",
+  "takeaway.down": ({ rate, base }) => "Der überfüllte Long baut sich wahrscheinlich ab, das heißt"
+    + ` Verkaufsdruck — ${rate}% der vergleichbaren Wochen taten das binnen acht Wochen, gegen`
+    + ` ${base}% für eine beliebige Position. Dazu passt eher die Short-Seite oder Zurückhaltung`
+    + " beim Long-Einstieg.",
+  "takeaway.up": ({ rate, base }) => "Der überfüllte Short baut sich wahrscheinlich ab, das heißt"
+    + ` Kaufdruck — ${rate}% der vergleichbaren Wochen taten das binnen acht Wochen, gegen`
+    + ` ${base}% für eine beliebige Position. Dazu passt eher die Long-Seite oder Zurückhaltung`
+    + " beim Short-Einstieg.",
+  "takeaway.building": "Noch kein Abbau angezeigt — die Menge baut das Extrem weiter aus. Messbar"
+    + " wird die Konstellation erst, wenn der Wochenfluss dreht.",
+  "takeaway.quiet": "Nichts angezeigt — die Positionierung ist diese Woche unauffällig.",
 
   "summary.noPair": "Für diesen Report ist kein Spekulanten/Hedger-Paar definiert, es gibt also"
     + " über die Spalten hinaus nichts zusammenzufassen.",
@@ -386,9 +391,14 @@ const DE = {
     + " zwangsläufig am Rand ihres eigenen Fensters klebt.",
 
   "notes.flags5": "<strong>Ablesen</strong> schließt jede Kachel und jede"
-    + " <strong>&#x24d8;</strong>-Box mit der Richtung ab, die sich aus der Positionierung ergäbe,"
-    + " wenn sich das Extrem auflöst. Sie folgt allein aus dem Fluss — in diesen Build fließt keine"
-    + " Preisreihe ein — und ist ein Baustein von mehreren, keine Anlageberatung.",
+    + " <strong>&#x24d8;</strong>-Box mit dem ab, was der Forward-Test tatsächlich gemessen hat —"
+    + " ob sich die Position auflöst — und mit dem Fluss, der daraus folgt. Bewusst nicht weiter:"
+    + " in diesen Build fließt keine Preisreihe ein, ob der Markt dem Fluss folgt, ist hier"
+    + " ungeprüft.",
+  "notes.flags6": ({ base }) => "Jede Quote steht gegen ihre Basisrate: eine beliebige liquide"
+    + ` Position abseits ihres eigenen Medians löste sich über dieselben acht Wochen in ${base}%`
+    + " der Fälle auf. Ein 64%-Bucket ist um diesen Abstand besser als Nichtstun, nicht zu 64%"
+    + " richtig.",
 
   "notes.whoTitle": "Wer ist wer",
   "notes.sourceTitle": "Quelle",

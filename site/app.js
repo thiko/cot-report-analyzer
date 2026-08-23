@@ -397,15 +397,25 @@ function situationMarkup(market, marketIdx, idx, meta) {
     <div class="tooltip__note">${paras.map((t) => `<p>${t}</p>`).join("")}${closing}</div>`;
 }
 
-/* The line every card and every ⓘ box ends on: what the positioning would imply
- * for the price if the extreme unwinds, said plainly enough to be useful to a
- * reader who opens this a few times a year and does not want to reassemble the
- * argument from percentiles.
+/* The line every card and every ⓘ box ends on, for a reader who opens this a few
+ * times a year and should not have to reassemble the argument from percentiles.
  *
- * It is a restatement of the flow, not a forecast — the crowd being long means
- * an unwind sells — and the tiers behind it only separated 59-66% of the time
- * in the forward test, which is why every wording stays on "can point to". */
-function takeawayParts(signal) {
+ * It stops where the forward test stopped. The test measured whether the net
+ * position unwinds eight weeks out, so that is what the sentence claims; "which
+ * means them selling" is arithmetic on top of it, not a second claim. It does
+ * not say the price falls — no price series enters this build, so that step is
+ * untested here however plausible it sounds.
+ *
+ * The rate rides along because the buckets only span 63-66% against a 58% base
+ * rate for any position at all. Quoting the hit rate without that baseline
+ * would overstate it exactly the way a price claim would. */
+const TAKEAWAY_RATE = { A: 66, B: 64, C: 63 };
+const TAKEAWAY_BASE = 58;
+
+// The ⓘ box knows the level but not the tier, since the tier also depends on
+// liquidity and the open-interest trend. Level 2 is quoted as B rather than A:
+// without the open-interest check the better bucket is not established.
+function takeawayParts(signal, tier) {
   if (signal.level === 0) {
     return {
       tone: "muted",
@@ -414,8 +424,10 @@ function takeawayParts(signal) {
   }
   return {
     tone: signal.side > 0 ? "down" : "up",
-    text: t(signal.side > 0 ? "takeaway.down" : "takeaway.up")
-        + t(signal.level === 2 ? "takeaway.strong" : "takeaway.weak"),
+    text: t(signal.side > 0 ? "takeaway.down" : "takeaway.up", {
+      rate: TAKEAWAY_RATE[tier || (signal.level === 2 ? "B" : "C")],
+      base: TAKEAWAY_BASE,
+    }),
   };
 }
 
@@ -614,7 +626,7 @@ function shortlistCard(row) {
   head.append(tier, name, symbol);
 
   // Stated as the flow that an unwind implies, because that is what was
-  // measured. The takeaway line below carries that flow through to a direction.
+  // measured. The takeaway line below puts a rate and a base rate on it.
   const pressure = document.createElement("p");
   pressure.className = `card__pressure card__pressure--${row.side > 0 ? "long" : "short"}`;
   pressure.textContent = t(row.side > 0 ? "card.pressureLong" : "card.pressureShort");
@@ -658,7 +670,7 @@ function shortlistCard(row) {
     card.append(warn);
   }
 
-  const { tone, text } = takeawayParts(row.signal);
+  const { tone, text } = takeawayParts(row.signal, row.tier);
   const takeaway = document.createElement("p");
   takeaway.className = `takeaway takeaway--${tone}`;
   const label = document.createElement("span");
@@ -758,6 +770,8 @@ function renderControls() {
   const note = el("term-structure-note");
   const curves = state.termStructure && Object.keys(state.termStructure.curves || {}).length;
   note.textContent = t(curves ? "notes.curvesAvailable" : "notes.curvesMissing");
+
+  el("flags-baseline").textContent = t("notes.flags6", { base: TAKEAWAY_BASE });
 }
 
 function fillSelect(select, options, value) {
